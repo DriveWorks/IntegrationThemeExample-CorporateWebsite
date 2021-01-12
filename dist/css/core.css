@@ -1,0 +1,78 @@
+@charset "UTF-8";
+
+/* Base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+[hidden] {
+  display: none;
+}
+
+
+/* Main Navigation */
+
+.content-wrap {
+  position: relative;
+  min-height: 100vh;
+}
+
+.content-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.content-nav .logo {
+  display: block;
+  width: 100%;
+}
+.content-nav .logo-wrap {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.content-nav nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.content-nav a {
+  display: block;
+}
+
+.content-inner {
+  width: 100%;
+}
+
+
+/* Screen: Laptop */
+@media screen and (min-width: 60em) {
+
+  .content-wrap {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .content-nav > * {
+    width: 100%;
+  }
+
+  .content-nav nav {
+    display: block;
+  }
+
+  .content-nav .nav-toggle {
+    display: none;
+  }
+}
