@@ -1,0 +1,92 @@
+/**
+* BASIC IMAGE GALLERY
+*/
+
+.image-gallery {
+  display: flex;
+  align-items: center;
+  margin: 0 -1em;
+}
+
+.gallery-arrow {
+  display: none;
+  background: #444;
+  padding: .85em;
+}
+.gallery-arrow svg {
+  width: 1em;
+  height: 1em;
+  min-width: 1em;
+}
+.gallery-arrow:first-of-type {
+  margin-left: 1em;
+}
+
+.gallery-images {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 .5em;
+  border-radius: 10px;
+}
+
+.image-slide {
+  display: block;
+  background-color: transparent;
+  border-radius: 0;
+  flex: 0 0 auto;
+  padding: 1em .5em;
+}
+.image-slide button {
+  display: block;
+  background-color: #fff;
+  padding: 0;
+  border-radius: var(--global-radius);
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
+}
+.image-slide button:focus {
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+.image-slide img {
+  display: block;
+  width: auto;
+  height: 8em;
+}
+
+
+/* Screen: Tablet-up */
+@media screen and (min-width: 40em) {
+
+  .image-gallery {
+    margin-left: -1em;
+  }
+  
+  .gallery-images {
+    margin: 0 1em 0 .5em;
+  }
+  .no-touch .gallery-images {
+    overflow: hidden;
+  }
+  
+  .gallery-arrow {
+    display: flex;
+  }
+
+  @supports (scroll-snap-align: start) {
+
+    .gallery-images {
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+    }
+
+    .image-slide {
+      scroll-snap-align: start;
+    }
+
+  }
+
+}

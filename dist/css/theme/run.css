@@ -1,0 +1,114 @@
+/**
+* FORM RUNNING VIEW
+*/
+
+body {
+  background: #fff;
+  overflow: hidden;
+}
+
+
+/* Page Wrapper */
+.content-wrap {
+  height: 100%;
+  min-height: 0;
+}
+
+.content-inner {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: auto;
+}
+.has-navigation .content-inner {
+  height: calc(100vh - 72px);
+}
+
+@media screen and (min-width: 60em) {
+  
+  .content-inner,
+  .has-navigation .content-inner {
+    height: 100vh;
+  }
+
+}
+
+
+/* Form Output */
+.form-container {
+  width: 100%;
+  height: 100%;
+  font-family: 'roboto light', sans-serif; /* Set default font on form content specifically */
+}
+
+
+/* Form Actions (Sidebar Menu) */
+.action-group {
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.actions-shown .action-group {
+  opacity: 1;
+}
+
+.action-list button {
+  padding: 1em 1.5em;
+  background: var(--color-neutral);
+  color: #fff;
+  margin-bottom: 1em;
+}
+.action-list button:hover {
+  filter: brightness(110%);
+}
+
+button.action-operation {
+  background: var(--color-warning);
+}
+button.action-transition {
+  background: var(--color-success);
+}
+
+
+/* Loading State */
+
+.form-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  opacity: 0.85;
+  backdrop-filter: blur(10px);
+  transition: opacity .3s ease;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  font-size: 2em;
+  font-weight: 600;
+}
+
+.loading-state .loader {
+  display: block;
+  font-size: 1.5em;
+  width: 1em;
+  height: 1em;
+  border: 8px solid #ddd;
+  border-top: 8px solid #444;
+  border-radius: 50%;
+  margin-right: .5em;
+  animation: spin 1s linear infinite;
+}
+
+
+/* Error */
+
+.run-error {
+  text-align: center;
+}

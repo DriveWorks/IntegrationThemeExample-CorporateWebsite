@@ -1,0 +1,181 @@
+/**
+* PROJECTS
+*/
+
+.project-inner {
+  padding: .5em .5em 3em;
+  margin: 0 auto;
+  max-width: var(--row-width);
+  min-height: 101vh; /* Stop scrollbar pop on load */
+}
+
+.section-title h1 {
+  margin: .5em .25em 1em;
+}
+
+.project-list {
+  display: flex;
+  flex-wrap: wrap;
+  transition: opacity .3s ease;
+}
+
+.empty-projects {
+  padding: 0 .5em;
+}
+.empty-projects p {
+  font-size: 1.5em;
+  margin: 0;
+}
+
+.project-item {
+  width: 100%;
+  padding: 0 .75em 1.5em;
+  text-decoration: none;
+  opacity: 0;
+  animation: fade-up .5s ease forwards;
+  animation-delay: calc(var(--index) * 20ms);
+}
+.project-item:focus {
+  outline: none;
+}
+
+.project-item .inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+  background-color: #fff;
+  padding: 1.5em;
+  border-radius: var(--global-radius);
+  box-shadow: var(--shadow-light);
+  transition: transform .3s ease;
+}
+.project-item .inner:hover {
+  transform: translateY(-3px) !important;
+}
+.project-item:focus .inner {
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.project-image {
+  width: 100%;
+  max-width: 180px;
+  margin-bottom: 1em;
+}
+.project-image .image {
+  background-size: contain;
+  background-position: center;
+  padding-bottom: 100%;
+  border-radius: .25em;
+}
+
+.project-item .project-name {
+  max-width: 100%;
+  word-wrap: break-word;
+  font-size: 1.2em;
+  margin: 0 0 .5em;
+}
+
+.project-item .project-description {
+  color: var(--accent-dark);
+  opacity: .8;
+  margin: 0 0 1.5em;
+}
+.project-item .project-description p {
+  margin: 0 0 1em;
+}
+.project-item .project-description *:last-child {
+  margin-bottom: 0;
+}
+
+
+.project-item .project-action {
+  display: inline-flex;
+  justify-content: center;
+  padding: 0.75em 1.5em;
+  margin: auto 0 0 0;
+  border-radius: 100em;
+  border: none;
+  background-color: var(--color-neutral);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 600;
+  transition:
+    background-color .3s ease,
+    filter .3s ease;
+}
+.project-item .project-action:hover {
+  filter: brightness(110%);
+}
+
+
+/* Screen: Tablet-up */
+@media screen and (min-width: 40em) {
+
+  .project-item {
+    width: 50%;
+  }
+
+  .project-inner {
+    padding: 1.5em 1.5em 5em;
+  }
+
+}
+
+
+/* Screen: Laptop-up */
+@media screen and (min-width: 60em) {
+
+  .section-title h1 {
+    margin: .75em .25em 1.25em;
+  }
+
+  .project-inner {
+    padding: 1.5em 2em 5em;
+  }
+  
+}
+
+
+/* Screen: Desktop-up */
+@media screen and (min-width: 80em) {
+
+  .project-item {
+    width: 25%;
+  }
+
+}
+
+
+/* Screen: Desktop-up */
+@media screen and (min-width: 100em) {
+
+  .project-item {
+    width: 16.666%;
+  }
+
+}
+
+
+/* Loading skeleton */
+
+.project-item.skeleton-item {
+  opacity: 1;
+  animation: none;
+}
+
+.skeleton-block {
+  height: 30em;
+  margin-bottom: .5em;
+}
+
+.project-list .skeleton-item:nth-child(2) {
+  opacity: .75;
+}
+.project-list .skeleton-item:nth-child(3) {
+  opacity: .5;
+}
+.project-list .skeleton-item:nth-child(4) {
+  opacity: .25;
+}
