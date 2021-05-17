@@ -37,7 +37,7 @@ async function startPageFunctions() {
 };
 
 /**
- * Render Specifications to container
+ * Render Projects to container
  */
 function renderProjects(projects) {
 
