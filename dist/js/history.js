@@ -11,9 +11,9 @@ let isLoadingHistory = false;
 let blockLazyLoading = false;
 
 /**
- * Initial load
+ * Start page functions
  */
-(async function () {
+ function startPageFunctions() {
 
     // Reset filter position (from previous scroll)
     localStorage.removeItem("lastFilterPosition");
@@ -21,25 +21,23 @@ let blockLazyLoading = false;
     // Get last stored query (if set)
     const oDataQueryString = getStoredQuery();
     getSpecificationsWithQuery(oDataQueryString, true);
-
-})();
+};
 
 /**
  * Restore previous filter query
  */
 function getStoredQuery(top, skip) {
-
     let query = "$top=";
 
     // Set limit (top)
-    if (top){
+    if (top) {
         query += top;
     } else {
         query += defaultLimit;
     }
 
     // Starting starting point (skip)
-    if (skip){
+    if (skip) {
         query += "&$skip=" + skip;
     }
 
@@ -51,12 +49,12 @@ function getStoredQuery(top, skip) {
     query += `&$orderby=DateEdited ${filterOrder}`;
 
     // Filter out running Specifications (shouldn't be accessible)
-    query += "&$filter=StateType ne 'Running'"
+    query += "&$filter=StateType ne 'Running'";
 
     // Get previous name
     const filterName = localStorage.getItem("lastFilterName");
     if (filterName) {
-        query += `and contains(tolower(name), tolower('${filterName}'))`
+        query += `and contains(tolower(name), tolower('${filterName}'))`;
         document.getElementById("filter-input").value = filterName;
     }
 
@@ -72,13 +70,12 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
     blockLazyLoading = false;
 
     try {
-
         const specifications = await client.getAllSpecifications(GROUP_ALIAS, oDataQueryString);
 
         // If Specifications is undefined (due to no connection)
         // - if nothing matches the given query, an empty Array [] is returned - not undefined.
         // - if the user's Session is invalid, an error string is returned - not undefined.
-        if (!specifications){
+        if (!specifications) {
             handleUnauthorizedUser("No connection found.");
             return;
         }
@@ -92,7 +89,7 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
             blockLazyLoading = true;
 
             clearLoadingState();
-            if (clearList){
+            if (clearList) {
                 showEmptyResults();
             }
 
@@ -107,37 +104,30 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
         // Get attached Properties for each Specification (for expanded view)
         const properties = [];
         for (let index = 0; index < specifications.length; index++) {
-
             const specification = specifications[index];
-
             try {
 
                 // Get Specification Properties
                 const props = await client.getSpecificationProperties(GROUP_ALIAS, specification.id);
                 const propertyMarkup = generateProperties(props);
 
-                properties.push(propertyMarkup)
-
+                properties.push(propertyMarkup);
             } catch (error) {
                 handleGenericError(error);
             }
-
         }
 
         // Render
         renderSpecifications(specifications, properties, clearList);
-
     } catch (error) {
         handleGenericError(error);
 
         // If authorization error, handle appropriately
-        if (String(error).includes("401")){
+        if (String(error).includes("401")) {
             handleUnauthorizedUser();
             return;
         }
-
     }
-
 }
 
 /**
@@ -146,7 +136,7 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
 async function renderSpecifications(specifications, properties, clearList = false) {
 
     // Clear Specification list (optional: lazy-load adds to existing list)
-    if (clearList){
+    if (clearList) {
         clearHistoryList();
         window.scroll(0,0);
     }
@@ -159,43 +149,34 @@ async function renderSpecifications(specifications, properties, clearList = fals
     for (let index = 0; index < specifications.length; index++) {
         generateHistoryItem(specifications[index], properties[index], index);
     }
-
 }
 
 /**
  * Generate Property markup
  */
 function generateProperties(properties) {
-
     let propertyMarkup = "";
-
     for (const [name, value] of Object.entries(properties)) {
-
         const markup = `
             <div class="prop-item prop-${stringToLowerDashed(name)}">
                 <div>${name}: </div>
                 <div>${value}</div>
             </div>
         `;
-
         propertyMarkup += markup;
-
     }
 
     return propertyMarkup;
-
 }
 
 /**
  * Generate history item markup
  */
 function generateHistoryItem(specification, propertyMarkup, index) {
-
     const id = specification.id;
     const name = specification.name;
     const status = specification.stateName;
     const dateEdited = specification.dateEdited;
-
     const markup = `
         <a href="details.html?specification=${specification.id}" class="item-details">
             <h3 class="item-name">${name}</h3>
@@ -222,7 +203,6 @@ function generateHistoryItem(specification, propertyMarkup, index) {
 
     // Inject new Specification item
     historyList.appendChild(item);
-
 }
 
 /**
@@ -234,12 +214,10 @@ window.onscroll = function () {
     if ( (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 1 ) {
 
         // If loading isn't blocked (no more items) or already loading (stop duplication)
-        if (!blockLazyLoading && !isLoadingHistory){
+        if (!blockLazyLoading && !isLoadingHistory) {
             getNextPaginationChunk();
         }
-
     }
-
 };
 
 /**
@@ -267,18 +245,16 @@ function getNextPaginationChunk() {
 
     // Increment stored position (to match items shown)
     localStorage.setItem("lastFilterPosition", newPosition + defaultLimit);
-
 }
 
 // Name filter input
 const filterInput = document.getElementById("filter-input");
 let filterTimeout;
 filterInput.onkeyup = function() {
-
     clearTimeout(filterTimeout);
 
     // Delay to allow brief typing period
-    filterTimeout = setTimeout(function(){
+    filterTimeout = setTimeout(function() {
 
         document.body.classList.add("is-loading");
         filterInput.parentNode.classList.add("is-loading");
@@ -286,18 +262,15 @@ filterInput.onkeyup = function() {
         filterSpecificationsByName(filterInput.value);
 
     }, 300);
-
 };
 
 /**
  * Filter results by name
  */
 async function filterSpecificationsByName(name) {
-
     try {
-
         let currentOrder = localStorage.getItem("lastFilterOrder");
-        if (!currentOrder){
+        if (!currentOrder) {
             currentOrder = defaultOrder;
         }
 
@@ -312,17 +285,15 @@ async function filterSpecificationsByName(name) {
 
         // Save filtered name (to restore on reload)
         localStorage.setItem("lastFilterName", name);
-
     } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
  * Ensure string is valid for use in OData
  */
-function escapeStringForOData(string){
+function escapeStringForOData(string) {
     return cleanString = encodeURIComponent(string.replace(/'/g, "''"));
 }
 
@@ -360,7 +331,6 @@ reverseAction.onclick = function () {
 
     // Stored new order
     localStorage.setItem("lastFilterOrder", filterOrder);
-
 };
 
 /**
@@ -397,7 +367,6 @@ filterReset.onclick = function () {
     // Update list
     const oDataQueryString = getStoredQuery();
     getSpecificationsWithQuery(oDataQueryString, true);
-
 };
 
 /**
@@ -418,7 +387,6 @@ function addLoadingState() {
     loading.innerHTML = markup;
 
     historyList.appendChild(loading);
-
 }
 
 /**
@@ -427,13 +395,12 @@ function addLoadingState() {
 function clearLoadingState() {
 
     // Reset loading state (delay to stop potential overlap)
-    setTimeout(function(){
+    setTimeout(() => {
         isLoadingHistory = false;
     }, 250);
 
     // Remove inline loading indicators (lazy-load)
     document.querySelectorAll(".history-loading").forEach(e => e.remove());
-
 }
 
 /**
@@ -456,7 +423,6 @@ function clearActionsLoading() {
     for (let i = 0; i < actions.length; i++) {
         actions[i].classList.remove("is-loading");
     }
-
 }
 
 /**
@@ -472,16 +438,13 @@ function showEmptyResults() {
     document.body.classList.remove("is-loading");
 
     clearActionsLoading();
-
 }
 
 function hideEmptyResults() {
-
     const empty = document.getElementsByClassName("history-empty");
-    if (empty.length > 0){
+    if (empty.length > 0) {
         empty[0].parentNode.removeChild(empty[0]);
     }
-
 }
 
 /**
@@ -500,4 +463,4 @@ const headerObserver = new IntersectionObserver(
     ([e]) => e.target.classList.toggle("is-stuck", e.intersectionRatio < 1),
     { threshold: [1] }
 );
-headerObserver.observe(pageHeader)
+headerObserver.observe(pageHeader);

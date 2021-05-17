@@ -224,6 +224,9 @@ button {
   width: 100%;
   padding: 0.5em 1.5em 1.5em;
   background-color: rgba(0,0,0,.025);
+  overflow: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .history-expanded .item-properties {
   display: flex;
@@ -232,11 +235,15 @@ button {
 
 .item-properties .prop-item {
   width: 100%;
-  margin-top: 1em;
+  margin-top: .5em;
+}
+.item-properties .prop-item div {
+  display: inline-block;
+  margin-top: .25em;
 }
 .item-properties .prop-item div:first-child {
+  margin-right: .25em;
   font-weight: 600;
-  margin-bottom: .25em;
 }
 
 
@@ -400,23 +407,7 @@ button {
     }
 
   }
-
-  .item-properties .prop-item {
-    width: 50%;
-  }
-
 }
-
-
-/* Screen: Deskop-up */
-@media screen and (min-width: 80em) {
-
-  .item-properties .prop-item {
-    width: 33%;
-  }
-  
-}
-
 
 /* Loading skeleton */
 

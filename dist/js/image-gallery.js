@@ -5,8 +5,12 @@
 const imageGallery = document.getElementById("gallery-images");
 const galleryNextButton = document.getElementById("gallery-next");
 const galleryPrevButton = document.getElementById("gallery-prev");
+let currentItem = 0;
 
-function setupGallery(){
+function setupGallery() {
+    galleryNextButton.onclick = () => updateCarousel("next");
+    galleryPrevButton.onclick = () => updateCarousel("prev");
+
     detectGalleryScroll();
     window.addEventListener("resize", detectGalleryScroll);
 }
@@ -14,14 +18,15 @@ function setupGallery(){
 /**
 * Image Carousel - Show/hide controls (if carousel can be scrolled)
 */
-function detectGalleryScroll(){
-    if ( imageGallery.scrollWidth > imageGallery.clientWidth ){
+function detectGalleryScroll() {
+    if (imageGallery.scrollWidth > imageGallery.clientWidth) {
         galleryNextButton.style.display = "";
         galleryPrevButton.style.display = "";
-    } else {
-        galleryNextButton.style.display = "none";
-        galleryPrevButton.style.display = "none";
+        return;
     }
+
+    galleryNextButton.style.display = "none";
+    galleryPrevButton.style.display = "none";
 }
 
 function galleryFullyScrolled() {
@@ -31,8 +36,6 @@ function galleryFullyScrolled() {
 /**
 * Image Carousel - Next/Prev button
 */
-let currentItem = 0;
-
 function updateCarousel(direction) {
 
     // Next image
@@ -61,18 +64,9 @@ function updateCarousel(direction) {
     });
 
     // If scrolled to the end, disable the next button
-    setTimeout(function () {
+    setTimeout(() => {
         if (galleryFullyScrolled()) {
             galleryNextButton.disabled = true;
         }
     }, 300);
-
 }
-
-galleryNextButton.onclick = function () {
-    updateCarousel("next");
-};
-
-galleryPrevButton.onclick = function () {
-    updateCarousel("prev");
-};
