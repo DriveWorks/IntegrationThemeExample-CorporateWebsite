@@ -37,7 +37,7 @@ let refreshTimeout;
 
     // Show error if no Specification Id passed
     if (!QUERY_SPECIFICATION_ID) {
-        pageTitle.innerHTML = "No Specification ID provided.";
+        pageTitle.innerHTML = "No Specification Id provided.";
         pageTitle.style.opacity = "";
         return;
     }
