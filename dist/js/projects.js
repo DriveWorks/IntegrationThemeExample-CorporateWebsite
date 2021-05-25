@@ -6,12 +6,12 @@ const CREDENTIALS = config.credentials;
 const projectsList = document.getElementById("project-list");
 
 /**
- * Page load
+ * Start page functions
  */
-(async function () {
+async function startPageFunctions() {
 
     // After short delay, show loading state (skip loading state entirely if very quick loading)
-    const loadingTimeout = setTimeout(function(){
+    const loadingTimeout = setTimeout(() => {
         projectsList.style.opacity = "";
     }, 1000);
 
@@ -23,32 +23,30 @@ const projectsList = document.getElementById("project-list");
 
         // Logout if Projects is undefined (due to no connection)
         // If no Projects are available for the User's Team, an empty Array [] is returned.
-        if (!projects){
+        if (!projects) {
             handleUnauthorizedUser("No connection found.");
             return;
         }
 
         // Render Projects
         renderProjects(projects);
-
     } catch (error) {
         handleGenericError(error);
         handleUnauthorizedUser();
     }
-
-})();
+};
 
 /**
- * Render Specifications to container
+ * Render Projects to container
  */
-function renderProjects(projects){
+function renderProjects(projects) {
 
     // Clear loading state, show list
     projectsList.innerHTML = "";
     projectsList.style.opacity = "";
 
     // Empty state
-    if (!projects.length){
+    if (!projects.length) {
         projectsList.innerHTML = `
             <div class="empty-projects">
                 <p>No Projects available.</p>
@@ -59,9 +57,7 @@ function renderProjects(projects){
 
     // Loop out Projects
     for (let index = 0; index < projects.length; index++) {
-
         const project = projects[index];
-
         const name = project.alias ? project.alias : project.name;
         const description = project.description;
         let imagePath = project.absoluteImagePath;
@@ -92,20 +88,17 @@ function renderProjects(projects){
 
         // Animate entrance (hidden by default)
         item.classList.add("animate");
-
     }
-
 }
 
 /**
  * Store active Specification ID between page changes
  */
-function storeProjectName(name){
+function storeProjectName(name) {
 
     // Clear any previously stored Transition (to enable creation)
     localStorage.removeItem("transitionSpecificationId");
 
     // Set active Project (accessed in form view)
     localStorage.setItem("activeProjectName", name);
-
 }

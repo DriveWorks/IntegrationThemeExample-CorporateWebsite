@@ -3,7 +3,6 @@
  */
 
 // Get config
-let firstRun = true;
 const DETAILS_UPDATE_INTERVAL = config.details.updateInterval * 1000;
 
 // Get current Specification Id (passed via URL query)
@@ -24,6 +23,7 @@ const detailImages = document.getElementById("detail-images");
 const galleryImages = document.getElementById("gallery-images");
 
 // Store data, for comparison on change
+let firstRun = true;
 let storedDetails;
 let storedActions;
 let storedProperties;
@@ -31,13 +31,41 @@ let storedDocuments;
 let refreshTimeout;
 
 /**
- * Handle client errors manually
+ * On page load
  */
-client.responseErrorDelegate = (res) => {
-    customErrorHandler(res);
+(async function () {
+
+    // Show error if no Specification Id passed
+    if (!QUERY_SPECIFICATION_ID) {
+        pageTitle.innerHTML = "No Specification Id provided.";
+        pageTitle.style.opacity = "";
+        return;
+    }
+})();
+
+/**
+ * Start page functions
+ */
+function startPageFunctions() {
+    setClientDelegates();
+    constructDetails();
 }
 
-function customErrorHandler(res){
+/**
+ * Set client delegates
+ */
+function setClientDelegates() {
+
+    // Handle client errors manually (custom, advanced handling)
+    client.responseErrorDelegate = (res) => {
+        customErrorHandler(res);
+    }
+}
+
+/**
+ * Handle DriveWorks client errors with additional custom logic
+ */
+function customErrorHandler(res) {
     const statusCode = res.status;
     switch (statusCode) {
 
@@ -45,55 +73,40 @@ function customErrorHandler(res){
         case 404:
 
             // Specification Id not found, show visual error
-            if (firstRun){
+            if (firstRun) {
                 pageTitle.innerHTML = "Invalid Specification ID.";
                 pageTitle.style.opacity = "";
                 return true;
             }
 
+            // Let the DriveWorks SDK handle the error further as default
             return false;
 
         // Unauthorized
         case 401:
 
             // Logout if run on page load
-            if (firstRun){
+            if (firstRun) {
                 handleUnauthorizedUser();
                 return true;
             }
 
             // Show session expired message, but keep page open 'read only'
             handleInvalidSession();
+
+            // Let the DriveWorks SDK handle the error further as default
             return false;
 
-        // Let DriveWorks API handle all other errors
+        // Let the DriveWorks SDK handle all other errors
         default:
             return false;
     }
-
 }
-
-/**
- * On page load
- */
-(async function () {
-
-    // Show error if no Specification Id passed
-    if (!QUERY_SPECIFICATION_ID){
-        pageTitle.innerHTML = "No Specification ID provided.";
-        pageTitle.style.opacity = "";
-        return;
-    }
-
-    constructDetails();
-
-})();
 
 /**
  * Construct Specification details
  */
-async function constructDetails(){
-
+async function constructDetails() {
     try {
 
         // Get Specification details
@@ -101,10 +114,10 @@ async function constructDetails(){
 
         // If Specification returns undefined, logout (no connection so no response)
         // If no/an invalid Specification Id is provided, a text error message is returned.
-        if (!specification){
+        if (!specification) {
 
             // Logout if run on page load
-            if (firstRun){
+            if (firstRun) {
                 handleUnauthorizedUser("No connection found.");
                 return;
             }
@@ -122,16 +135,14 @@ async function constructDetails(){
         getDocuments();
 
         // Update data after brief timeout (repeat indefinitely)
-        setTimeout(function(){
+        setTimeout(function() {
             constructDetails();
         }, DETAILS_UPDATE_INTERVAL);
 
         firstRun = false;
-
     } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
@@ -140,8 +151,7 @@ async function constructDetails(){
 async function renderDetails(details) {
 
     // Output details if: not stored (first run), objects don't match
-    if (!storedDetails || !objectsEqual(details, storedDetails)){
-
+    if (!storedDetails || !objectsEqual(details, storedDetails)) {
         const name = details.name;
         const status = details.stateName;
         const created = details.dateCreated;
@@ -169,30 +179,26 @@ async function renderDetails(details) {
 
         // Save details to storage
         storedDetails = details;
-
     }
-
 }
 
 /**
 * Get Specification Actions (Operations/Transitions)
 */
-async function getActions(){
-
+async function getActions() {
     try {
 
         // Get all Actions
         const actions = await client.getSpecificationActions(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
 
         // Output Actions if: not stored (first run), objects don't match
-        if (!storedActions || !objectsEqual(actions, storedActions)){
+        if (!storedActions || !objectsEqual(actions, storedActions)) {
 
             // Clear existing Actions
             pageActions.innerHTML = "";
 
             // Output new Actions
             for (let actionIndex = 0; actionIndex < actions.length; actionIndex++) {
-
                 const action = actions[actionIndex];
                 const title = action.title;
                 const name = action.name;
@@ -212,26 +218,22 @@ async function getActions(){
                 } else {
                     renderTransition(name, button);
                 }
-
             }
 
             pageActions.style.opacity = "";
 
             // Update stored Actions (to compare against)
             storedActions = actions;
-
         }
-
-    } catch (error){
+    } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
 * Render button to invoke a given Operation
 */
-function renderOperation(name, button, messages){
+function renderOperation(name, button, messages) {
 
     // Mark as Operation
     button.classList.add("action-operation");
@@ -244,11 +246,10 @@ function renderOperation(name, button, messages){
         button.classList.add("is-loading");
 
         // If messages are returned
-        if (messages.length > 0){
+        if (messages.length > 0) {
 
             // Show confirmation message (after slight delay, to allow UI to show loading spinner)
             setTimeout(function() {
-
                 const confirmation = window.confirm(`If you continue, the following actions will take place:\n${messages.join("\n")}`);
 
                 if (confirmation) {
@@ -257,27 +258,23 @@ function renderOperation(name, button, messages){
                     button.classList.remove("is-loading");
                     return false;
                 }
-
             }, 100);
 
         } else {
 
             // Just run the Operation
             invokeOperation(name, button);
-
         }
-
     };
 
     // Output
     pageActions.appendChild(button);
-
 }
 
 /**
 * Render button to invoke a given Transition
 */
-function renderTransition(name, button){
+function renderTransition(name, button) {
 
     // Mark as Transition
     button.classList.add("action-transition");
@@ -290,35 +287,30 @@ function renderTransition(name, button){
 
     // Output
     pageActions.appendChild(button);
-
 }
 
 /**
 * Invoke Operation (requires custom callback per operation)
 */
-async function invokeOperation(operationName, button){
-
+async function invokeOperation(operationName, button) {
     try {
-
         await client.invokeOperation(GROUP_ALIAS, QUERY_SPECIFICATION_ID, operationName);
 
         // Refresh page to update content (causes redirect if deleted)
         location.reload();
-
-    } catch (error){
+    } catch (error) {
         handleGenericError(error);
         window.alert("That Operation cannot be run at this time.");
     }
 
     // Remove processing state
     button.classList.remove("is-loading");
-
 }
 
 /**
 * Invoke Transition (takes user to form running)
 */
-async function invokeTransition(transitionName, button){
+async function invokeTransition(transitionName, button) {
 
     // Show processing state
     button.classList.add("is-loading");
@@ -330,47 +322,39 @@ async function invokeTransition(transitionName, button){
 
         // Redirect to form running, show transitioned state
         window.location.href = `run.html?specification=${QUERY_SPECIFICATION_ID}`;
-
-    } catch (error){
+    } catch (error) {
         handleGenericError(error);
         alert("That Transition cannot be run at this time.");
 
         // Remove processing state
         button.classList.remove("is-loading");
-
     }
-
 }
 
 /**
 * Get Specification Properties
 */
 async function getProperties() {
-
     try {
-
         const properties = await client.getSpecificationProperties(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
 
         // If Properties are returned (returns empty object if none set)
-        if (properties && !isEmpty(properties)){
+        if (properties && !isEmpty(properties)) {
 
             // Render Properties if: not stored (first run), objects don't match
-            if (!storedProperties || !objectsEqual(properties, storedProperties)){
+            if (!storedProperties || !objectsEqual(properties, storedProperties)) {
                 renderProperties(properties);
             }
-
         }
-
     } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
 * Render Specification Properties
 */
-function renderProperties(properties){
+function renderProperties(properties) {
 
     // Clear out loading state
     detailProperties.innerHTML = "";
@@ -383,7 +367,6 @@ function renderProperties(properties){
     propertyList.classList.add("properties-content");
 
     for (const [name, value] of propertyArray) {
-
         const markup = `
             <div>${name}</div>
             <div>${value}</div>
@@ -394,7 +377,6 @@ function renderProperties(properties){
         item.innerHTML = markup;
 
         propertyList.appendChild(item);
-
     }
 
     // Append items
@@ -403,7 +385,6 @@ function renderProperties(properties){
 
     // Save Properties to storage (for future comparison)
     storedProperties = properties;
-
 }
 
 /**
@@ -411,18 +392,16 @@ function renderProperties(properties){
 */
 const documentTotalCount = document.getElementById("document-total-count");
 const imageTotalCount = document.getElementById("image-total-count");
-
 let imageCount, documentCount, generatingCount;
 
 async function getDocuments() {
-
     try {
 
         // Get Documents
         const documents = await client.getSpecificationDocuments(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
 
         // Empty state
-        if (isEmpty(documents)){
+        if (isEmpty(documents)) {
             renderEmptyDocuments();
             return;
         }
@@ -430,27 +409,24 @@ async function getDocuments() {
         // Render Documents if:
         //  - Not stored (first run)
         //  - Objects don't match
-        if (!storedDocuments || !objectsEqual(documents, storedDocuments)){
+        if (!storedDocuments || !objectsEqual(documents, storedDocuments)) {
             renderDocuments(documents);
         }
-
     } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
 * Render Specification Documents
 */
 function renderDocuments(documents) {
+    const imageFormats = [".jpg", ".jpeg", ".png", ".gif"];
 
     // Clear out existing Documents (replace rather than append, to ensure all changes are shown)
     imageCount = documentCount = generatingCount = 0;
     galleryImages.innerHTML = "";
     documentsList.innerHTML = "";
-
-    const imageFormats = [".jpg", ".jpeg", ".png", ".gif"];
 
     // Loop over Documents
     for (item of documents) {
@@ -461,18 +437,17 @@ function renderDocuments(documents) {
         }
 
         // Detect images (for carousel)
-        if ( imageFormats.indexOf(item.extension) >= 0 && item.fileExists ){
+        if (imageFormats.indexOf(item.extension.toLowerCase()) >= 0 && item.fileExists) {
             renderImage(item);
             imageCount++;
         } else {
             renderDocument(item);
             documentCount++;
         }
-
     }
 
     // Show Documents (if available)
-    if (documentCount === 0){
+    if (documentCount === 0) {
         renderEmptyDocuments();
     } else {
         showDocuments();
@@ -487,7 +462,6 @@ function renderDocuments(documents) {
 
     // Store Documents (for future comparison)
     storedDocuments = documents;
-
 }
 
 /**
@@ -496,22 +470,21 @@ function renderDocuments(documents) {
 const generatingMessage = document.getElementById("documents-generating");
 const generatingText = document.getElementById("generating-count");
 
-function updateGeneratingMessage(){
+function updateGeneratingMessage() {
 
-    if (generatingCount > 0){
-        generatingText.innerHTML = `${(documentCount - generatingCount) + 1}/${documentCount}`
+    if (generatingCount > 0) {
+        generatingText.innerHTML = `${(documentCount - generatingCount) + 1}/${documentCount}`;
         generatingMessage.style.display = "";
     } else {
         generatingText.innerHTML = "";
         generatingMessage.style.display = "none";
     }
-
 }
 
 /**
 * Show image carousel
 */
-function showImages(){
+function showImages() {
 
     // Update visual count
     imageTotalCount.innerHTML = imageCount;
@@ -521,19 +494,15 @@ function showImages(){
 
     // Fade in
     setTimeout(function () {
-
         detailImages.style.opacity = "";
-
         setupGallery(); // modules/image-gallery.js
-
     }, 100);
-
 }
 
 /**
 * Show Document list
 */
-function showDocuments(){
+function showDocuments() {
 
     // Update visual count
     documentTotalCount.innerHTML = documentCount;
@@ -543,21 +512,19 @@ function showDocuments(){
     setTimeout(function () {
         detailDocuments.style.opacity = "";
     }, 100);
-
 }
 
 /**
 * Render empty state
 */
-function renderEmptyDocuments(){
+function renderEmptyDocuments() {
     detailDocuments.innerHTML = '<div class="empty-documents">No documents available for this order at this time.</div>';
 }
 
 /**
 * Render image to carousel
 */
-function renderImage(image){
-
+function renderImage(image) {
     const id = image.id;
     const displayName = image.name;
     const extension = image.extension
@@ -569,29 +536,24 @@ function renderImage(image){
     slide.classList.add("image-slide");
 
     const img = `<img src="${imgUrl}" alt="" />`;
-
     const button = document.createElement("button");
     button.setAttribute("title", "View larger");
     button.innerHTML = img;
 
     // Attach click event
     button.onclick = function () {
-
         openLightbox(imgUrl); // modules/lightbox.js
-
     };
 
     // Insert slide
     slide.appendChild(button);
     galleryImages.appendChild(slide);
-
 }
 
 /**
 * Render Document item
 */
-function renderDocument(file){
-
+function renderDocument(file) {
     const id = file.id;
     const dateCreated = file.dateCreated;
     const displayName = file.name;
@@ -602,7 +564,7 @@ function renderDocument(file){
     const documentUrl = client.getSpecificationDocumentUrl(GROUP_ALIAS, QUERY_SPECIFICATION_ID, id, resourceName);
 
     const fileStatus = fileExists ? "Ready" : "Generating";
-    if (!fileExists){
+    if (!fileExists) {
         generatingCount++;
     }
 
@@ -632,8 +594,7 @@ function renderDocument(file){
     const item = document.createElement("div");
     item.classList.add("document-item");
 
-    if (fileExists){
-
+    if (fileExists) {
         const content = `
             <a href="${documentUrl}" target="_blank" title="View Document" class="view-link inner">
                 ${markup}
@@ -645,14 +606,12 @@ function renderDocument(file){
 
         item.classList.add("is-linked");
         item.innerHTML = content;
-
     } else {
         item.setAttribute("data-url", documentUrl);
         item.innerHTML = `<div class="inner">${markup}</div>`;
     }
 
     documentsList.appendChild(item);
-
 }
 
 /**
@@ -663,12 +622,12 @@ const headerObserver = new IntersectionObserver(
     ([e]) => e.target.classList.toggle("is-stuck", e.intersectionRatio < 1),
     { threshold: [1] }
 );
-headerObserver.observe(pageHeader)
+headerObserver.observe(pageHeader);
 
 /**
 * Handle invalid Session
 */
-function handleInvalidSession(){
+function handleInvalidSession() {
     showPageNotification("Your Session has expired.", true);
     clearTimeout(refreshTimeout);
 }
@@ -676,7 +635,7 @@ function handleInvalidSession(){
 /**
 * Handle connection dropouts
 */
-function handleNoConnection(){
+function handleNoConnection() {
     showPageNotification("No connection found.");
     clearTimeout(refreshTimeout);
 }
@@ -684,10 +643,10 @@ function handleNoConnection(){
 /**
 * Render Specification details
 */
-function showPageNotification(notice, showAction){
+function showPageNotification(notice, showAction) {
     document.getElementById("notification-message").innerHTML = notice;
     document.getElementById("notification-container").classList.add("is-shown");
-    if (showAction){
+    if (showAction) {
         document.getElementById("notification-action").classList.add("is-shown");
     }
 }

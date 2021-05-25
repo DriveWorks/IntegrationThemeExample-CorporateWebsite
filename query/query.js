@@ -12,9 +12,19 @@
  *  depending on the intended Action to perform.
  *
  *  Multiple Actions can be performed at once by combining the query parameters using the & symbol.
+ * 
+ *  Examples:
+ *  /query?run={ProjectName} [requires autoLogin: true]
+ *  /query?alias={GroupAlias}&run={ProjectName}
+ *  /query?specification={SpecificationName}
+ *  /query?specification={SpecificationName}&transition={TransitionName}
+ *  /query?specification={SpecificationName}&operation={OperationName}
  *
 */
 
+/**
+ * Debug Mode - Enable for console output
+*/
 const debugMode = false;
 
 /**
@@ -24,16 +34,7 @@ const CURRENT_SESSION_ID = localStorage.getItem("sessionId");
 const CURRENT_SESSION_ALIAS = localStorage.getItem("sessionAlias");
 const REQUIRE_NEW_SESSION = config.query.requireNewSession;
 const REQUIRE_EXACT_ALIAS = config.query.requireExactAlias;
-
-/**
- * Start client
-**/
 const SERVER_URL = config.serverUrl;
-const client = new window.DriveWorksLiveClient(SERVER_URL);
-
-/**
- * Load defaults
-**/
 let autoLogin = config.query.autoLogin;
 let groupAlias = config.query.defaultGroupAlias;
 let projectName = config.query.defaultProjectName;
@@ -47,46 +48,47 @@ const queryProject = query.get("run") || query.get("Run");
 const querySpecification = query.get("specification") || query.get("Specification");
 const queryOperation = query.get("operation") || query.get("Operation");
 const queryTransition = query.get("transition") || query.get("Transition");
-if (queryAlias){
+if (queryAlias) {
     groupAlias = queryAlias;
     autoLogin = true; // If a username has been specified, then it should be treated as an autoLogin
 }
-if (queryProject){
+if (queryProject) {
     projectName = queryProject; // Override the default Project, if supplied
 }
 
 /**
- * Run on load
-*/
-(async function() {
+ * Create client
+ */
+let client;
+function dwClientLoaded() {
     try {
-        startFunction();
+        client = new window.DriveWorksLiveClient(SERVER_URL);
     } catch (error) {
         handleGenericError(error);
     }
 
-})();
-
-/**
- * Quick Logout (?bye)
- * https://docs.driveworkspro.com/Topic/WebThemeLogout
- */
-if (query.has("bye")){
-    handleLogout();
+    clientFunctions();
 }
 
 /**
- * Execute the function
-*/
-async function startFunction(){
+ * Start client functions
+ */
+async function clientFunctions() {
     debug("Start query");
 
+    // Quick Logout (?bye)
+    // Similar to: https://docs.driveworkspro.com/Topic/WebThemeLogout
+    if (query.has("bye")) {
+        handleLogout();
+        return;
+    }
+
     // Maintain the current Session if we don't need to auto login
-    if (autoLogin){
+    if (autoLogin) {
         debug("Auto login");
 
         // If there is no Session, start one
-        if (CURRENT_SESSION_ID){
+        if (CURRENT_SESSION_ID) {
             debug("Current Session");
 
             const usersAreDifferent = CURRENT_SESSION_ALIAS !== groupAlias;
@@ -94,34 +96,27 @@ async function startFunction(){
             debug(`REQUIRE_EXACT_ALIAS: ${REQUIRE_EXACT_ALIAS}`);
 
             const requireSessionRestart = REQUIRE_NEW_SESSION || (REQUIRE_EXACT_ALIAS && usersAreDifferent);
-            if (requireSessionRestart){
+            if (requireSessionRestart) {
                 debug("Restart required");
 
                 try {
-
                     // Logout and start a new Session
                     await client.logoutAllGroups();
                     await startSession();
-
-                } catch (error){
+                } catch (error) {
                     handleGenericError(error);
                 }
-
             } else {
                 debug("No restart required");
             }
-
         } else {
-
             await startSession();
-
         }
-
     }
 
     // Redirect to login page if we are not logged in
     const loggedIn = await ensureLoggedIn();
-    if (loggedIn){
+    if (loggedIn) {
         debug("Logged in");
 
         processQuery();
@@ -129,23 +124,21 @@ async function startFunction(){
     } else {
         debug("Not logged in");
     }
-
 }
 
 /**
  * Start new Session (supplied Group Alias or default [fallback])
  */
-async function startSession(){
+async function startSession() {
     debug("Start Session");
 
     // If no Group Alias passed or none set as default, exit.
-    if (!groupAlias){
+    if (!groupAlias) {
         debug("No Group Alias");
         return false;
     }
 
     try {
-
         // Attempt login with Group Alias (supplied or default)
         const login = await client.loginGroup(groupAlias);
         debug(login);
@@ -153,11 +146,9 @@ async function startSession(){
         // Store Group Alias and Session Id returned
         localStorage.setItem("sessionAlias", groupAlias);
         localStorage.setItem("sessionId", login.sessionId);
-
-    } catch (error){
+    } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
@@ -167,48 +158,42 @@ async function ensureLoggedIn() {
     debug("Ensure logged in");
 
     try {
-
         // Test connection by trying to get Projects
         const response = await client.getProjects(groupAlias);
         return response;
-
     } catch (error) {
         handleGenericError(error);
         redirectToLogin();
     }
-
 }
 
 /**
 * Process query data
 */
-async function processQuery(){
+async function processQuery() {
     debug("Process query");
 
     // If Project (query/config default) or Specification passed
-    if (!projectName && !querySpecification){
+    if (!projectName && !querySpecification) {
         debug("No Project or Specification passed.");
 
         // Go to dashboard
         window.location.href = "../projects.html";
-
     } else {
 
         // Check if trying to run Operation/Transition without a defined Specification Id
-        if ( (queryOperation || queryTransition) && !querySpecification ){
+        if ((queryOperation || queryTransition) && !querySpecification) {
             redirectToLogin("Transition or Operation passed without Specification Id.", "error");
             return false;
         }
 
         // Handle query
-        if (querySpecification && querySpecification !== ""){
+        if (querySpecification && querySpecification !== "") {
             processSpecification();
         } else {
             runProject();
         }
-
     }
-
 }
 
 /**
@@ -219,29 +204,27 @@ async function processQuery(){
 * Parameter: run={ProjectName}
 *
 */
-async function runProject(){
+async function runProject() {
     debug(`Run project: ${projectName}`);
 
     // New Specification from specified Project
     window.location.href = `../run.html?project=${projectName}`;
-
 }
 
 /**
 * PROCESS SPECIFICATION
 */
-async function processSpecification(){
+async function processSpecification() {
     debug("Process specification");
 
     // Check for Operation or Transition in query
-    if (queryOperation && queryOperation !== ""){
+    if (queryOperation && queryOperation !== "") {
         performOperation();
-    } else if (queryTransition && queryTransition !== ""){
+    } else if (queryTransition && queryTransition !== "") {
         performTransition();
     } else {
         viewSpecification();
     }
-
 }
 
 /**
@@ -252,12 +235,11 @@ async function processSpecification(){
 * Parameter: specification={SpecificationName}
 *
 */
-function viewSpecification(){
+function viewSpecification() {
     debug(`View spec: ${querySpecification}`);
 
     // Open Specification
     window.location.href = `../details.html?specification=${querySpecification}`;
-
 }
 
 /**
@@ -269,11 +251,10 @@ function viewSpecification(){
 * Parameter: specification={SpecificationName}&operation={OperationName}
 *
 */
-async function performOperation(){
+async function performOperation() {
     debug(`Perform operation: ${queryOperation}`);
 
     try {
-
         // Get latest Actions (to validate Operation)
         await client.getSpecificationActions(groupAlias, querySpecification);
 
@@ -282,15 +263,12 @@ async function performOperation(){
 
         // View Specification details (after Operation)
         window.location.href = `../details.html?specification=${querySpecification}`;
-
-    } catch (error){
+    } catch (error) {
         handleGenericError(error);
 
         // Redirect to login screen
         redirectToLogin("Error performing operation.", "error");
-
     }
-
 }
 
 /**
@@ -302,11 +280,10 @@ async function performOperation(){
 * Parameter: specification={SpecificationName}&transition={TransitionName}
 *
 */
-async function performTransition(){
+async function performTransition() {
     debug(`Perform transition: ${queryTransition}`);
 
     try {
-
         // Get latest Actions (to validate Transition)
         await client.getSpecificationActions(groupAlias, querySpecification);
 
@@ -315,43 +292,34 @@ async function performTransition(){
 
         // Run Specification in new transitioned state
         window.location.href = `../run.html?specification=${querySpecification}`;
-
-    } catch (error){
+    } catch (error) {
         handleGenericError(error);
 
         // Redirect to login screen
         redirectToLogin("Error performing transition.", "error");
-
     }
-
 }
 
 // Display error on screen
-function showError(message){
-
+function showError(message) {
     const markup = document.createElement("p");
     markup.innerHTML = message;
 
     document.getElementById("error-message").appendChild(markup);
-
 }
 
 /**
  * Handle logout
  */
 async function handleLogout() {
-
     try {
-
         // Log out any existing Sessions
         await client.logoutAllGroups();
 
         redirectToLogin("You have been logged out.", "success");
-
     } catch (error) {
         handleGenericError(error);
     }
-
 }
 
 /**
@@ -362,29 +330,26 @@ function redirectToLogin(notice, state) {
     // Clear Session (any invalid details)
     localStorage.clear();
 
-    if (notice && state){
+    if (notice && state) {
         setLoginNotice(notice, state);
     } else {
         setLoginNotice("Login to access that.", "error");
     }
 
     // Redirect
-    window.location.href = "../index.html?redirect=query-error";
-
+    window.location.href = "../index.html?source=query-error";
 }
 
 /**
  * Set login screen notice
  */
 function setLoginNotice(text, state) {
-
     if (!state) {
         state = "info";
     }
 
     const notice = JSON.stringify({ text: text, state: state });
     localStorage.setItem("loginNotice", notice);
-
 }
 
 /**
@@ -398,7 +363,7 @@ function handleGenericError(error) {
  * Debug
  */
 function debug(message) {
-    if (debugMode){
+    if (debugMode) {
         console.log(message);
     }
 }

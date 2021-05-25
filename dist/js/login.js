@@ -12,51 +12,47 @@ const URL_QUERY = new URLSearchParams(window.location.search);
 const loginForm = document.getElementById("login-form");
 const loginButton = document.getElementById("login-button");
 const loginNotice = document.getElementById("login-notice");
+loginForm.addEventListener("submit", handleLogin);
 
 /**
  * Create client
  */
 let client;
-try {
-    client = new window.DriveWorksLiveClient(SERVER_URL);
-} catch (error){
-    console.log(error);
+function dwClientLoaded() {
+    try {
+        client = new window.DriveWorksLiveClient(SERVER_URL);
+    } catch (error) {
+        console.log(error);
+        loginError(false, "Cannot connect to client");
+    }
+
+    startPageFunctions();
 }
 
 /**
- * On page load
+ * Start page functions
  */
-(async function() {
+ function startPageFunctions() {
 
     // Check localStorage support (show warning if not e.g. <= iOS 10 Private Window)
-    if (localStorageSupported()){
-
-        try {
-
-            // Check if logged in, and redirect
-            checkExistingLogin();
-
-            // Display an notices passed e.g. logged out
-            showLoginNotice();
-
-        } catch (error) {
-            handleGenericError(error);
-        }
-
+    if (!localStorageSupported()) {
+        // Disable login and show notice
+        document.getElementById("login-button").disabled = true;
+        loginNotice.innerText = "Please use a non-private window on this device.";
+        loginNotice.classList.add("error", "is-shown");
         return;
     }
 
-    // Disable login and show notice
-    document.getElementById("login-button").disabled = true;
-    loginNotice.innerText = "Please use a non-private window on this device.";
-    loginNotice.classList.add("error", "is-shown");
+    try {
+        // Check if logged in, and redirect
+        checkExistingLogin();
 
-})();
-
-/**
- * Custom form submission handling
- */
-loginForm.addEventListener("submit", handleLogin);
+        // Display any notices passed e.g. logged out
+        showLoginNotice();
+    } catch (error) {
+        handleGenericError(error);
+    }
+}
 
 /**
  * Handle login with server, store valid Session
@@ -69,7 +65,7 @@ async function handleLogin(evt) {
     evt.preventDefault();
 
     // Show error if cannot connect to client
-    if (!client){
+    if (!client) {
         loginError(false, "Cannot connect to client");
         return;
     }
@@ -77,14 +73,12 @@ async function handleLogin(evt) {
     // Get credentials
     const inputUsername = document.getElementById("login-username").value;
     const inputPassword = document.getElementById("login-password").value;
-
     const userCredentials = {
         username: inputUsername,
         password: inputPassword
     };
 
     try {
-
         // Show loading state, reset notice
         loginButton.classList.add("is-loading");
         hideLoginNotice();
@@ -93,7 +87,7 @@ async function handleLogin(evt) {
         const result = await client.loginGroup(GROUP_ALIAS, userCredentials);
 
         // Show error is login failed
-        if (!result){
+        if (!result) {
             loginError(false, "No connection found.");
             return;
         }
@@ -105,23 +99,20 @@ async function handleLogin(evt) {
 
         // Return to previous location (if redirected to login)
         const returnUrl = URL_QUERY.get("returnUrl");
-        if (returnUrl && config.loginReturnUrls){
+        if (returnUrl && config.loginReturnUrls) {
             window.location.href = `${window.location.origin}/${decodeURIComponent(returnUrl)}`;
             return;
         }
 
         // Redirect to default location
         window.location.href = LOGIN_REDIRECT_URL;
-
     } catch (error) {
         loginError(error);
     }
-
 }
 
-function loginError(error, noticeText){
-
-    if (error){
+function loginError(error, noticeText) {
+    if (error) {
         handleGenericError(error);
     }
 
@@ -136,52 +127,45 @@ function loginError(error, noticeText){
     // Show client error
     setLoginNotice(notice, "error");
     showLoginNotice();
-
 }
 
 /**
  * Set login screen notice
  */
 function setLoginNotice(text, state) {
-
     if (!state) {
         state = "info";
     }
 
     const notice = JSON.stringify({ text: text, state: state });
     localStorage.setItem("loginNotice", notice);
-
 }
 
 /**
  * Show/hide notice on login form
  */
 
-function showLoginNotice(){
-
-    // Read stored notice
+function showLoginNotice() {
     const notice = JSON.parse(localStorage.getItem("loginNotice"));
-
-    if (notice){
-
-        let state = notice.state;
-        if (!state){
-            state = "neutral";
-        }
-
-        // Display feedback
-        loginNotice.innerText = notice.text;
-        loginNotice.classList.remove("error", "success", "neutral");
-        loginNotice.classList.add(state, "is-shown");
-
-        // Clear message
-        localStorage.removeItem("loginNotice");
-
+    if (!notice) {
+        return;
     }
 
+    let state = notice.state;
+    if (!state) {
+        state = "neutral";
+    }
+
+    // Display feedback
+    loginNotice.innerText = notice.text;
+    loginNotice.classList.remove("error", "success", "neutral");
+    loginNotice.classList.add(state, "is-shown");
+
+    // Clear message
+    localStorage.removeItem("loginNotice");
 }
 
-function hideLoginNotice(){
+function hideLoginNotice() {
     loginNotice.classList.remove("is-shown");
 }
 
@@ -190,58 +174,49 @@ function hideLoginNotice(){
  */
 const passwordToggle = document.getElementById("password-toggle");
 passwordToggle.onclick = function () {
-
     const passwordInput = document.getElementById("login-password");
     const currentType = passwordInput.type;
 
-    if (currentType === "password"){
+    if (currentType === "password") {
         passwordInput.type = "text";
         passwordToggle.innerHTML = "<svg viewBox=\"0 0 512 512\"><use xlink:href=\"#eye-closed\"/></svg>Hide";
-    } else {
-        passwordInput.type = "password";
-        passwordToggle.innerHTML = "<svg viewBox=\"0 0 512 512\"><use xlink:href=\"#eye-open\"/></svg>Show";
+        return;
     }
-
+    passwordInput.type = "password";
+    passwordToggle.innerHTML = "<svg viewBox=\"0 0 512 512\"><use xlink:href=\"#eye-open\"/></svg>Show";
 };
 
 /**
  * Check existing login (redirect inside app if true)
  */
-async function checkExistingLogin(){
-
-    if (SESSION_GROUP_ALIAS){
-
-        try {
-
-            // Test connection
-            await client.getProjects(SESSION_GROUP_ALIAS, "$top=1");
-
-            // Redirect to initial location
-            window.location.replace(LOGIN_REDIRECT_URL);
-
-        } catch (error) {
-            handleGenericError(error);
-        }
-
+async function checkExistingLogin() {
+    if (!SESSION_GROUP_ALIAS) {
+        return;
     }
 
+    try {
+        // Test connection
+        await client.getProjects(SESSION_GROUP_ALIAS, "$top=1");
+
+        // Redirect to initial location
+        window.location.replace(LOGIN_REDIRECT_URL);
+    } catch (error) {
+        handleGenericError(error);
+    }
 }
 
 /**
- * Check for localStorage support (to store credentials)
- *
- * Example: Incognito (Private) Windows in <= iOS 10 do not allow use of localStorage (errors when accessed)
+ * Check for localStorage support (used to store session information)
+ * Example: Incognito (Private) windows in iOS 10 and below do not allow localStorage (errors when accessed)
  */
 function localStorageSupported() {
-
     try {
-        localStorage.setItem("test", "test");
-        localStorage.removeItem("test");
+        localStorage.setItem("storageSupportTest", "Test");
+        localStorage.removeItem("storageSupportTest");
         return true;
-    } catch (e){
+    } catch (e) {
         return false;
     }
-
 }
 
 /**

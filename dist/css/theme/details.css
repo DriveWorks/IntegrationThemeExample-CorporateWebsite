@@ -360,15 +360,15 @@ button.action-transition {
   position: absolute;
   bottom: .35em;
   left: 0;
-  font-size: 13px;
-  padding: .05em .3em .15em;
+  font-size: 11px;
+  line-height: 1;
+  padding: .1em .3em .2em;
   border-radius: .2em;
   text-transform: uppercase;
   color: #fff;
   background-color: #444;
-  max-width: 4.5em;
+  max-width: 5em;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .file-extension.type-pdf {
