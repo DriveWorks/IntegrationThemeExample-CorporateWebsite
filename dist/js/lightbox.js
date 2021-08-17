@@ -11,7 +11,7 @@ document.getElementById("lightbox-close").onclick = () => closeLightbox();
 document.getElementById("lightbox-bg").onclick = () => closeLightbox();
 
 // Close with ESC key
-document.onkeydown = function(e) {
+document.onkeydown = function (e) {
     e = e || window.event;
     if (e.key === "Escape") {
         closeLightbox();

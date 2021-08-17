@@ -3,24 +3,53 @@
  */
 
 const defaultLimit = 10;
-const defaultOrder = "desc";
+const defaultDateOrder = "desc";
+let renderedProperties = [];
+
+const storageKeyName = "historyFilterName";
+const storageKeyDateOrder = "historyDateOrder";
+const storageKeyPosition = "historyPosition";
 
 const historyList = document.getElementById("history-content");
+const nameFilterInput = document.getElementById("name-filter-input");
+const dateOrderToggle = document.getElementById("date-order-toggle");
+const expandToggle = document.getElementById("expand-toggle");
+const resetButton = document.getElementById("filter-reset-button");
 
+let filterDateOrder = localStorage.getItem(storageKeyDateOrder) ?? defaultDateOrder;
 let isLoadingHistory = false;
 let blockLazyLoading = false;
+let expandedView = false;
 
 /**
  * Start page functions
  */
- function startPageFunctions() {
+function startPageFunctions() {
 
-    // Reset filter position (from previous scroll)
-    localStorage.removeItem("lastFilterPosition");
+    // Reset previously stored scroll position
+    localStorage.removeItem(storageKeyPosition);
 
-    // Get last stored query (if set)
+    // Update filter UI to mirror stored values
+    setDateOrderToggleState(filterDateOrder);
+
+    // Get last stored query
     const oDataQueryString = getStoredQuery();
     getSpecificationsWithQuery(oDataQueryString, true);
+};
+
+/**
+ * Load on scroll
+ */
+window.onscroll = () => {
+
+    // If scrolled to the end of the page body
+    if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 1) {
+
+        // If loading isn't blocked (no more items) or already loading (stop duplication)
+        if (!blockLazyLoading && !isLoadingHistory) {
+            getNextPaginationChunk();
+        }
+    }
 };
 
 /**
@@ -41,21 +70,17 @@ function getStoredQuery(top, skip) {
         query += "&$skip=" + skip;
     }
 
-    // Get previous ordering
-    let filterOrder = localStorage.getItem("lastFilterOrder");
-    if (!filterOrder) {
-        filterOrder = defaultOrder;
-    }
-    query += `&$orderby=DateEdited ${filterOrder}`;
+    // Get date order
+    query += `&$orderby=DateEdited ${filterDateOrder}`;
 
-    // Filter out running Specifications (shouldn't be accessible)
+    // Filter out running Specifications (shouldn't be shown/accessible)
     query += "&$filter=StateType ne 'Running'";
 
-    // Get previous name
-    const filterName = localStorage.getItem("lastFilterName");
+    // Get name filter
+    const filterName = localStorage.getItem(storageKeyName);
     if (filterName) {
         query += `and contains(tolower(name), tolower('${filterName}'))`;
-        document.getElementById("filter-input").value = filterName;
+        nameFilterInput.value = filterName;
     }
 
     return query;
@@ -101,24 +126,8 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
             blockLazyLoading = true;
         }
 
-        // Get attached Properties for each Specification (for expanded view)
-        const properties = [];
-        for (let index = 0; index < specifications.length; index++) {
-            const specification = specifications[index];
-            try {
-
-                // Get Specification Properties
-                const props = await client.getSpecificationProperties(GROUP_ALIAS, specification.id);
-                const propertyMarkup = generateProperties(props);
-
-                properties.push(propertyMarkup);
-            } catch (error) {
-                handleGenericError(error);
-            }
-        }
-
-        // Render
-        renderSpecifications(specifications, properties, clearList);
+        // Render items
+        renderSpecifications(specifications, clearList);
     } catch (error) {
         handleGenericError(error);
 
@@ -133,7 +142,7 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
 /**
  * Render Specifications to container
  */
-async function renderSpecifications(specifications, properties, clearList = false) {
+async function renderSpecifications(specifications, clearList = false) {
 
     // Clear Specification list (optional: lazy-load adds to existing list)
     if (clearList) {
@@ -147,135 +156,135 @@ async function renderSpecifications(specifications, properties, clearList = fals
 
     // Build markup
     for (let index = 0; index < specifications.length; index++) {
-        generateHistoryItem(specifications[index], properties[index], index);
+        generateHistoryItem(specifications[index], index);
     }
+}
+
+/**
+ * Generate history item markup
+ */
+function generateHistoryItem(specification, index) {
+    const status = specification.stateName;
+    const dateEdited = specification.dateEdited;
+
+    // Generate item
+    const item = document.createElement("div");
+    item.classList.add("history-item");
+    item.style.setProperty("--index", index);
+    item.setAttribute("data-id", specification.id);
+    if (expandedView) {
+        item.classList.add("is-expanded");
+    }
+
+    // Wrapper
+    const itemContent = document.createElement("div");
+    itemContent.classList.add("inner");
+
+    // Details
+    const details = `
+        <a href="details.html?specification=${specification.id}" class="item-details">
+            <h3 class="item-name">${specification.name}</h3>
+            ${status && `<div class="status"><div class="status-tag status-${normalizeString(status)}" title="${status}">${splitOnUpperCase(status)}</div></div>`}
+            ${dateEdited && `<div class="edit-date">${new Date(dateEdited).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div>`}
+            <div><div class="view-action button">View</div></div>
+        </a>
+    `;
+    itemContent.innerHTML = details;
+
+    // Expand Action
+    const expandButton = document.createElement("button");
+    expandButton.classList.add("expand-button");
+    expandButton.title = "Toggle Properties";
+    expandButton.innerHTML = `
+        <svg class="icon"><use xlink:href="dist/icons.svg#arrow-right"/></svg>
+        <span>Expand</span>
+    `;
+    expandButton.addEventListener("click", () => {
+        const toggleClass = "is-expanded";
+        const container = expandButton.closest(".history-item");
+
+        if (!container.classList.contains(toggleClass)) {
+            getSpecificationProperties(specification.id);
+        }
+
+        container.classList.toggle(toggleClass);
+    });
+    itemContent.appendChild(expandButton);
+
+    // Properties
+    const propertiesContainer = document.createElement("div");
+    propertiesContainer.classList.add("item-properties");
+
+    // Remove loading state (after first item injected)
+    clearLoadingState();
+
+    // Inject new Specification item
+    item.appendChild(itemContent);
+    item.appendChild(propertiesContainer);
+    historyList.appendChild(item);
+
+    // Get Specification Properties (if expanded)
+    if (expandedView) {
+        getSpecificationProperties(specification.id);
+    }
+}
+
+/**
+ * Get Specification Properties
+ */
+async function getSpecificationProperties(specificationId) {
+
+    // Check if previously requested & rendered
+    if (renderedProperties.includes(specificationId.toString())) {
+        return;
+    }
+
+    // Loading state
+    const output = document.querySelector(`.history-item[data-id='${specificationId}'] .item-properties`);
+    output.innerHTML = '<div class="loading-dots"></div>';
+
+    // Request Properties
+    const properties = await client.getSpecificationProperties(config.groupAlias, specificationId);
+
+    // Create markup
+    let markup;
+    if (properties && !isEmpty(properties)) {
+        markup = generateProperties(properties);
+        renderedProperties.push(specificationId.toString());
+    } else {
+        markup = '<div class="empty-state">No additional properties.</div>';
+    }
+
+    // Render
+    output.innerHTML = markup;
 }
 
 /**
  * Generate Property markup
  */
 function generateProperties(properties) {
-    let propertyMarkup = "";
+    let markup = "";
     for (const [name, value] of Object.entries(properties)) {
-        const markup = `
-            <div class="prop-item prop-${stringToLowerDashed(name)}">
+        const item = `
+            <div class="prop-item prop-${normalizeString(name)}">
                 <div>${name}: </div>
                 <div>${value}</div>
             </div>
         `;
-        propertyMarkup += markup;
+        markup += item;
     }
-
-    return propertyMarkup;
+    return markup;
 }
 
 /**
- * Generate history item markup
- */
-function generateHistoryItem(specification, propertyMarkup, index) {
-    const id = specification.id;
-    const name = specification.name;
-    const status = specification.stateName;
-    const dateEdited = specification.dateEdited;
-    const markup = `
-        <a href="details.html?specification=${specification.id}" class="item-details">
-            <h3 class="item-name">${name}</h3>
-            ${ status && `<div><div class="status-tag status-${stringToLowerDashed(status)}">${splitOnUpperCase(status)}</div></div>`}
-            ${ dateEdited && `<div class="edit-date">${new Date(dateEdited).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div>`}
-            <div><div class="view-action button">View</div></div>
-        </a>
-        ${ propertyMarkup && `
-            <div class="item-properties">
-                ${propertyMarkup}
-            </div>
-        `}
-    `;
-
-    // Generate element
-    const item = document.createElement("div");
-    item.classList.add("history-item");
-    item.style.setProperty("--index", index);
-    item.setAttribute("data-id", id);
-    item.innerHTML = markup;
-
-    // Remove loading state (after first item injected)
-    clearLoadingState();
-
-    // Inject new Specification item
-    historyList.appendChild(item);
-}
-
-/**
- * Load on scroll
- */
-window.onscroll = function () {
-
-    // If scrolled to the end of the page body
-    if ( (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 1 ) {
-
-        // If loading isn't blocked (no more items) or already loading (stop duplication)
-        if (!blockLazyLoading && !isLoadingHistory) {
-            getNextPaginationChunk();
-        }
-    }
-};
-
-/**
- * Load next chunk
- */
-function getNextPaginationChunk() {
-
-    // Prevent parallel loading
-    isLoadingHistory = true;
-
-    // Show loading state
-    addLoadingState();
-
-    // Get saved filter position (results previously shown)
-    const lastFilterPosition = localStorage.getItem("lastFilterPosition");
-    if (lastFilterPosition) {
-        newPosition = parseFloat(lastFilterPosition);
-    } else {
-        newPosition = defaultLimit;
-    }
-
-    // Append new Specifications
-    const oDataQueryString = getStoredQuery(defaultLimit, newPosition);
-    getSpecificationsWithQuery(oDataQueryString);
-
-    // Increment stored position (to match items shown)
-    localStorage.setItem("lastFilterPosition", newPosition + defaultLimit);
-}
-
-// Name filter input
-const filterInput = document.getElementById("filter-input");
-let filterTimeout;
-filterInput.onkeyup = function() {
-    clearTimeout(filterTimeout);
-
-    // Delay to allow brief typing period
-    filterTimeout = setTimeout(function() {
-
-        document.body.classList.add("is-loading");
-        filterInput.parentNode.classList.add("is-loading");
-
-        filterSpecificationsByName(filterInput.value);
-
-    }, 300);
-};
-
-/**
- * Filter results by name
+ * Filter results by Specification Name
  */
 async function filterSpecificationsByName(name) {
     try {
-        let currentOrder = localStorage.getItem("lastFilterOrder");
-        if (!currentOrder) {
-            currentOrder = defaultOrder;
-        }
+        const currentDateOrder = localStorage.getItem(storageKeyDateOrder) ?? defaultDateOrder;
 
         // Create OData filter (contains name)
-        const query = `$filter=contains(tolower(name), tolower('${escapeStringForOData(name)}')) and StateType ne 'Running'&$orderby=DateEdited ${currentOrder}&$top=${defaultLimit}`;
+        const query = `$filter=contains(tolower(name), tolower('${escapeStringForOData(name)}')) and StateType ne 'Running'&$orderby=DateEdited ${currentDateOrder}&$top=${defaultLimit}`;
 
         // Reset stage
         resetFilterPosition();
@@ -284,41 +293,51 @@ async function filterSpecificationsByName(name) {
         getSpecificationsWithQuery(query, true)
 
         // Save filtered name (to restore on reload)
-        localStorage.setItem("lastFilterName", name);
+        localStorage.setItem(storageKeyName, name);
     } catch (error) {
         handleGenericError(error);
     }
 }
 
 /**
- * Ensure string is valid for use in OData
+ * Filter Input: Specification Name
  */
-function escapeStringForOData(string) {
-    return cleanString = encodeURIComponent(string.replace(/'/g, "''"));
-}
+let filterTimeout;
+nameFilterInput.onkeyup = (e) => {
+
+    // Ignore tab navigation (forwards + backwards)
+    if (e.key == "Tab" || e.key == "Shift") {
+        return;
+    }
+
+    // Delay to allow brief typing period
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(function () {
+        document.body.classList.add("is-loading");
+        nameFilterInput.parentNode.classList.add("is-loading");
+
+        filterSpecificationsByName(nameFilterInput.value);
+    }, 300);
+};
 
 /**
- * Reverse results order
+ * Filter Toggle: Date Order
  */
-const lastOrder = localStorage.getItem("lastFilterOrder");
-let filterOrder = (lastOrder ? lastOrder : defaultOrder);
-
-const reverseAction = document.getElementById("filter-reverse");
-reverseAction.onclick = function () {
+dateOrderToggle.onclick = () => {
 
     // Show loading state
-    this.classList.add("is-loading");
     document.body.classList.add("is-loading");
-    window.scroll(0,0);
+    window.scroll(0, 0);
 
     // Switch stored order
-    filterOrder = (filterOrder === "desc" ? "asc" : "desc");
+    filterDateOrder = (filterDateOrder === "desc" ? "asc" : "desc");
+    setDateOrderToggleState(filterDateOrder);
 
     // Flip order in query items
-    let query = "$orderby=DateEdited " + filterOrder + "&$top=" + defaultLimit;
+    let query = "$orderby=DateEdited " + filterDateOrder + "&$top=" + defaultLimit;
 
     // Filter with name (if set)
-    const filterName = localStorage.getItem("lastFilterName");
+    const filterName = localStorage.getItem(storageKeyName);
     if (filterName) {
         query += "&$filter=startswith(tolower(name), tolower('" + filterName + "'))";
     }
@@ -330,36 +349,86 @@ reverseAction.onclick = function () {
     getSpecificationsWithQuery(query, true);
 
     // Stored new order
-    localStorage.setItem("lastFilterOrder", filterOrder);
+    localStorage.setItem(storageKeyDateOrder, filterDateOrder);
 };
 
-/**
- * Expand/collapse Properties
- */
-const filterExpand = document.getElementById("filter-expand");
-filterExpand.onclick = function () {
-    document.body.classList.toggle("history-expanded");
-    this.innerHTML = (this.innerHTML === "Collapse" ? "Expand" : "Collapse");
-};
+function setDateOrderToggleState(order) {
+    // Reset
+    dateOrderToggle.classList.remove("order-asc", "order-desc");
+
+    // Set state
+    dateOrderToggle.classList.add(`order-${order}`);
+    dateOrderToggle.querySelector("span").innerHTML = order == "desc" ? "Newest First" : "Oldest First";
+}
 
 /**
- * Reset filters buttons
+ * Filter Toggle: Expand (toggle Specification Properties)
  */
-const filterReset = document.getElementById("filter-reset");
-filterReset.onclick = function () {
+expandToggle.onclick = () => {
+
+    // Toggle state
+    expandedView = !expandedView;
+
+    // Update toggle state
+    setExpandToggleState();
+
+    // Toggle items
+    const items = document.querySelectorAll(".history-item");
+    const expandClass = "is-expanded";
+    items.forEach((item) => {
+
+        // Expand item
+        if (expandedView) {
+            item.classList.add(expandClass);
+            getSpecificationProperties(item.dataset.id);
+            return;
+        }
+
+        // Collapse item
+        item.classList.remove(expandClass);
+    });
+};
+
+function setExpandToggleState() {
+    const icon = expandToggle.querySelector("[data-icon]");
+    const text = expandToggle.querySelector("[data-text]");
+
+    // Expanded (show "Collapse" action)
+    if (expandedView) {
+        icon.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#collapse" /></svg>';
+        text.innerHTML =  "Collapse";
+        return;
+    }
+
+    // Collapsed (show "Expand" action)
+    icon.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#expand" /></svg>';
+    text.innerHTML = "Expand";
+}
+
+/**
+ * Filter Action: Reset
+ */
+resetButton.onclick = () => {
 
     // Show loading state
-    this.classList.add("is-loading");
     document.body.classList.add("is-loading");
-    window.scroll(0,0);
+    window.scroll(0, 0);
 
     // Clear stored query
-    localStorage.removeItem("lastFilterName");
-    localStorage.removeItem("lastFilterOrder");
-    localStorage.removeItem("lastFilterPosition");
+    localStorage.removeItem(storageKeyName);
+    localStorage.removeItem(storageKeyDateOrder);
+    localStorage.removeItem(storageKeyPosition);
 
     // Clear input
-    filterInput.value = "";
+    nameFilterInput.value = "";
+
+    // Reset expanded state
+    expandedView = false;
+    setExpandToggleState("expand");
+
+    // Reset order state
+    filterDateOrder = defaultDateOrder;
+    setDateOrderToggleState(filterDateOrder);
 
     // Allow lazy loading
     blockLazyLoading = false;
@@ -368,6 +437,33 @@ filterReset.onclick = function () {
     const oDataQueryString = getStoredQuery();
     getSpecificationsWithQuery(oDataQueryString, true);
 };
+
+/**
+ * Load next chunk of Specification items
+ */
+ function getNextPaginationChunk() {
+
+    // Prevent parallel loading
+    isLoadingHistory = true;
+
+    // Show loading state
+    addLoadingState();
+
+    // Get stored position (results previously shown)
+    const storedPosition = localStorage.getItem(storageKeyPosition);
+    if (storedPosition) {
+        newPosition = parseFloat(storedPosition);
+    } else {
+        newPosition = defaultLimit;
+    }
+
+    // Append new Specifications
+    const oDataQueryString = getStoredQuery(defaultLimit, newPosition);
+    getSpecificationsWithQuery(oDataQueryString);
+
+    // Increment stored position (to match items shown)
+    localStorage.setItem(storageKeyPosition, newPosition + defaultLimit);
+}
 
 /**
  * Add loading state
@@ -408,6 +504,7 @@ function clearLoadingState() {
  */
 function clearHistoryList() {
     historyList.innerHTML = "";
+    clearRenderedProperties();
 }
 
 /**
@@ -416,7 +513,7 @@ function clearHistoryList() {
 function clearActionsLoading() {
 
     // Name input
-    filterInput.parentNode.classList.remove("is-loading")
+    nameFilterInput.parentNode.classList.remove("is-loading")
 
     // Buttons
     const actions = document.querySelectorAll(".history-controls button")
@@ -426,12 +523,19 @@ function clearActionsLoading() {
 }
 
 /**
- * Show/hide empty results message
+ * Reset rendered Specification Properties
+ */
+ function clearRenderedProperties() {
+    renderedProperties = [];
+}
+
+/**
+ * Show empty results message
  */
 function showEmptyResults() {
 
     // Show message
-    const markup = "<div class=\"history-empty\">No matching results found.</div>";
+    const markup = '<div class="history-empty">No matching results found.</div>';
     historyList.innerHTML = markup;
 
     // Clear loading state
@@ -440,6 +544,9 @@ function showEmptyResults() {
     clearActionsLoading();
 }
 
+/**
+ * Hide empty results message
+ */
 function hideEmptyResults() {
     const empty = document.getElementsByClassName("history-empty");
     if (empty.length > 0) {
@@ -451,8 +558,15 @@ function hideEmptyResults() {
  * Reset stored position
  */
 function resetFilterPosition() {
-    localStorage.removeItem("lastFilterPosition");
+    localStorage.removeItem(storageKeyPosition);
     allowLoad = true;
+}
+
+/**
+ * Ensure string is valid for use in OData
+ */
+ function escapeStringForOData(string) {
+    return cleanString = encodeURIComponent(string.replaceAll(/'/g, "''"));
 }
 
 /**

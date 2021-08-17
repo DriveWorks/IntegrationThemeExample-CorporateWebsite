@@ -179,11 +179,11 @@ passwordToggle.onclick = function () {
 
     if (currentType === "password") {
         passwordInput.type = "text";
-        passwordToggle.innerHTML = "<svg viewBox=\"0 0 512 512\"><use xlink:href=\"#eye-closed\"/></svg>Hide";
+        passwordToggle.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#eye-closed"/></svg> Hide';
         return;
     }
     passwordInput.type = "password";
-    passwordToggle.innerHTML = "<svg viewBox=\"0 0 512 512\"><use xlink:href=\"#eye-open\"/></svg>Show";
+    passwordToggle.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#eye-open"/></svg> Show';
 };
 
 /**

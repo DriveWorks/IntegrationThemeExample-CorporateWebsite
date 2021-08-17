@@ -45,14 +45,15 @@
   right: 0;
   padding: 1em;
   margin: 1em;
-  background-color: #fff;
-  color: #000;
+  background-color: var(--color-error);
+  color: #fff;
+  transition: filter .25s ease;
 }
-
+.image-lightbox button:hover {
+  background-color: var(--color-error);
+  filter: brightness(90%);
+}
 .image-lightbox button svg {
   width: 1em;
   height: 1em;
-}
-.image-lightbox button:hover {
-  background-color: #ddd;
 }

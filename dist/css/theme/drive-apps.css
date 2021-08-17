@@ -1,8 +1,8 @@
 /**
-* PROJECTS
+* DRIVEAPPS
 */
 
-.project-inner {
+.drive-app-inner {
   padding: .5em .5em 3em;
   margin: 0 auto;
   max-width: var(--row-width);
@@ -13,21 +13,21 @@
   margin: .5em .25em 1em;
 }
 
-.project-list {
+.drive-app-list {
   display: flex;
   flex-wrap: wrap;
   transition: opacity .3s ease;
 }
 
-.empty-projects {
+.empty-drive-apps {
   padding: 0 .5em;
 }
-.empty-projects p {
+.empty-drive-apps p {
   font-size: 1.5em;
   margin: 0;
 }
 
-.project-item {
+.drive-app-item {
   width: 100%;
   padding: 0 .75em 1.5em;
   text-decoration: none;
@@ -35,18 +35,19 @@
   animation: fade-up .5s ease forwards;
   animation-delay: calc(var(--index) * 20ms);
 }
-.project-item:focus {
+.drive-app-item:focus {
   outline: none;
 }
-.project-item:focus .inner {
+.drive-app-item:focus .inner {
   box-shadow: 0 0 0 2px var(--color-focus);
 }
 
-.project-item .inner {
+.drive-app-item .inner {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   height: 100%;
   background-color: #fff;
   padding: 1.5em;
@@ -55,46 +56,48 @@
   box-shadow: var(--shadow-light);
   transition: border .3s ease;
 }
-.project-item .inner:hover {
+.drive-app-item .inner:hover {
   border: 2px solid var(--color-focus);
 }
 
-.project-image {
+.drive-app-item .icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 1.5rem;
+  font-size: 1.5em;
+  color: rgba(0,0,0,.15);
+}
+
+.drive-app-item .details {
   width: 100%;
-  max-width: 180px;
   margin-bottom: 1em;
-}
-.project-image .image {
-  background-size: contain;
-  background-position: center;
-  padding-bottom: 100%;
-  border-radius: .25em;
+  overflow: hidden;
 }
 
-.project-item .project-name {
-  max-width: 100%;
-  word-wrap: break-word;
-  font-size: 1.2em;
-  margin: 0 0 .5em;
+.drive-app-item .drive-app-alias,
+.drive-app-item .drive-app-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.project-item .project-description {
+.drive-app-item .drive-app-alias {
+  font-size: 1.25em;
+  padding-right: 2em;
+  margin: 0 0 .15em;
+}
+.drive-app-item .drive-app-name {
+  font-size: 1em;
+  font-weight: 400;
   color: var(--accent-dark);
-  opacity: .8;
-  margin: 0 0 1.5em;
-}
-.project-item .project-description p {
-  margin: 0 0 1em;
-}
-.project-item .project-description *:last-child {
-  margin-bottom: 0;
+  opacity: .6;
 }
 
-.project-item .project-action {
+.drive-app-item .drive-app-action {
   display: inline-flex;
   justify-content: center;
-  padding: 0.75em 1.5em;
-  margin: auto 0 0 0;
+  padding: 0.75em 2em;
+  margin: 0;
   border-radius: 100em;
   border: none;
   background-color: var(--color-neutral);
@@ -106,21 +109,31 @@
     background-color .3s ease,
     filter .3s ease;
 }
-.project-item .project-action:hover {
+.drive-app-item .drive-app-action:hover {
   filter: brightness(110%);
 }
 
 /* Screen: Tablet-up */
 @media screen and (min-width: 40em) {
 
-  .project-item {
-    width: 50%;
-  }
-
-  .project-inner {
+  .drive-app-inner {
     padding: 1.5em 1.5em 5em;
   }
 
+  .drive-app-item .inner {
+    flex-wrap: nowrap;
+    padding: 1.5em;
+  }
+
+  .drive-app-item .icon {
+    position: static;
+    margin: 0 1rem 0 0;
+    font-size: 2.5em;
+  }
+
+  .drive-app-item .details {
+    margin: 0 1.5em 0 0;
+  }
 }
 
 /* Screen: Laptop-up */
@@ -130,47 +143,36 @@
     margin: .75em .25em 1.25em;
   }
 
-  .project-inner {
+  .drive-app-inner {
     padding: 1.5em 2em 5em;
   }
-
-}
-
-/* Screen: Desktop-up */
-@media screen and (min-width: 80em) {
-
-  .project-item {
-    width: 25%;
-  }
-
 }
 
 /* Screen: Desktop-up */
 @media screen and (min-width: 100em) {
 
-  .project-item {
-    width: 20%;
+  .drive-app-item {
+    width: 50%;
   }
-
 }
 
 /* Loading skeleton */
 .skeleton-block {
-  height: 30em;
+  height: 6em;
   margin-bottom: .5em;
 }
 
-.project-item.skeleton-item {
+.drive-app-item.skeleton-item {
   opacity: 1;
   animation: none;
 }
 
-.project-list .skeleton-item:nth-child(2) {
+.drive-app-list .skeleton-item:nth-child(2) {
   opacity: .75;
 }
-.project-list .skeleton-item:nth-child(3) {
+.drive-app-list .skeleton-item:nth-child(3) {
   opacity: .5;
 }
-.project-list .skeleton-item:nth-child(4) {
+.drive-app-list .skeleton-item:nth-child(4) {
   opacity: .25;
 }

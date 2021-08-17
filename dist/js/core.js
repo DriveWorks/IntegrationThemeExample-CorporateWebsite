@@ -66,7 +66,7 @@ function setLoginNotice(text, state) {
         state = "info";
     }
 
-    const notice = JSON.stringify({text,state});
+    const notice = JSON.stringify({text, state});
     localStorage.setItem("loginNotice", notice);
 }
 
@@ -149,7 +149,7 @@ if (navList) {
     const navToggle = document.getElementById("nav-toggle");
     const navClose = document.getElementById("nav-close");
 
-    navToggle.onclick = function() {
+    navToggle.onclick = function () {
         document.body.classList.toggle("sidebar-open");
     };
 
@@ -160,19 +160,21 @@ if (navList) {
 
 /**
  * Split string on uppercase
+ * "MyStringValue" => "My String Value"
  */
 function splitOnUpperCase(string) {
-    return string.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
+    return string.split(/(?=[A-Z])/).join(" ");
 }
 
 /**
- * Convert string formatting to lowercase & dashed  (e.g. "Total Price" => "total-price" )
+ * Format string to remove (clean) special characters, lowercase & hyphenate whitespace for class & file names
+ * e.g. "Total (Plus VAT) " => "total-plus-vat"
  */
-function stringToLowerDashed(string) {
+function normalizeString(string) {
     string = string.toLowerCase();
-    string = string.replace(/[^a-zA-Z ]/g, "");
-    string = string.replace(" ", "-");
-
+    string = string.replaceAll(/[^a-zA-Z0-9- ]/g, "");
+    string = string.trim();
+    string = string.replaceAll(/ +/g, "-");
     return string;
 }
 
@@ -196,7 +198,7 @@ function isEmpty(obj) {
 function showUsername() {
     const usernameOutput = document.getElementById("active-username");
     const username = localStorage.getItem("sessionUsername");
-    if (!username || !usernameOutput ) {
+    if (!username || !usernameOutput) {
         return;
     }
 

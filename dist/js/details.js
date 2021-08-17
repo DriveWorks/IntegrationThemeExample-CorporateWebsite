@@ -24,10 +24,12 @@ const galleryImages = document.getElementById("gallery-images");
 
 // Store data, for comparison on change
 let firstRun = true;
-let storedDetails;
-let storedActions;
-let storedProperties;
-let storedDocuments;
+let imagesShown = false;
+let storedDetails = [];
+let storedActions = [];
+let storedProperties = [];
+let storedDocuments = [];
+let renderedImages = [];
 let refreshTimeout;
 
 /**
@@ -135,7 +137,7 @@ async function constructDetails() {
         getDocuments();
 
         // Update data after brief timeout (repeat indefinitely)
-        setTimeout(function() {
+        setTimeout(function () {
             constructDetails();
         }, DETAILS_UPDATE_INTERVAL);
 
@@ -163,9 +165,9 @@ async function renderDetails(details) {
 
         // Generate details
         const markup = `
-            ${ status && `<div class="detail-item detail-status"><div>Status</div><div class="status-tag status-${status.toLowerCase()}">${status}</div></div>`}
-            ${ created && `<div class="detail-item detail-created"><div>Created</div><div>${new Date(created).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div></div>`}
-            ${ edited && `<div class="detail-item detail-edited"><div>Modified</div><div>${new Date(edited).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div></div>`}
+            ${status && `<div class="detail-item detail-status"><div>Status</div><div class="status-tag status-${normalizeString(status)}" title="${splitOnUpperCase(status)}">${splitOnUpperCase(status)}</div></div>`}
+            ${created && `<div class="detail-item detail-created"><div>Created</div><div>${new Date(created).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div></div>`}
+            ${edited && `<div class="detail-item detail-edited"><div>Modified</div><div>${new Date(edited).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div></div>`}
         `;
 
         const content = document.createElement("div");
@@ -249,7 +251,7 @@ function renderOperation(name, button, messages) {
         if (messages.length > 0) {
 
             // Show confirmation message (after slight delay, to allow UI to show loading spinner)
-            setTimeout(function() {
+            setTimeout(function () {
                 const confirmation = window.confirm(`If you continue, the following actions will take place:\n${messages.join("\n")}`);
 
                 if (confirmation) {
@@ -373,7 +375,7 @@ function renderProperties(properties) {
         `;
 
         const item = document.createElement("div");
-        item.classList.add("property-item");
+        item.classList.add("property-item", `property-${normalizeString(name)}`);
         item.innerHTML = markup;
 
         propertyList.appendChild(item);
@@ -390,9 +392,9 @@ function renderProperties(properties) {
 /**
 * Get Specification Documents
 */
-const documentTotalCount = document.getElementById("document-total-count");
-const imageTotalCount = document.getElementById("image-total-count");
-let imageCount, documentCount, generatingCount;
+const documentTotalOutput = document.getElementById("document-total-count");
+const imageTotalOutput = document.getElementById("image-total-count");
+let imageCount = documentCount = generatingCount = 0;
 
 async function getDocuments() {
     try {
@@ -407,11 +409,12 @@ async function getDocuments() {
         }
 
         // Render Documents if:
-        //  - Not stored (first run)
-        //  - Objects don't match
+        //  - Nothing stored (first load)
+        //  - New Documents returned (objects don't match)
         if (!storedDocuments || !objectsEqual(documents, storedDocuments)) {
             renderDocuments(documents);
         }
+
     } catch (error) {
         handleGenericError(error);
     }
@@ -422,10 +425,10 @@ async function getDocuments() {
 */
 function renderDocuments(documents) {
     const imageFormats = [".jpg", ".jpeg", ".png", ".gif"];
+    const specificationImages = [];
 
     // Clear out existing Documents (replace rather than append, to ensure all changes are shown)
-    imageCount = documentCount = generatingCount = 0;
-    galleryImages.innerHTML = "";
+    documentCount = generatingCount = 0;
     documentsList.innerHTML = "";
 
     // Loop over Documents
@@ -436,29 +439,35 @@ function renderDocuments(documents) {
             continue;
         }
 
-        // Detect images (for carousel)
+        // Detect images (to extract into gallery view)
         if (imageFormats.indexOf(item.extension.toLowerCase()) >= 0 && item.fileExists) {
-            renderImage(item);
-            imageCount++;
+            specificationImages.push(item);
         } else {
             renderDocument(item);
             documentCount++;
         }
     }
 
-    // Show Documents (if available)
-    if (documentCount === 0) {
-        renderEmptyDocuments();
-    } else {
-        showDocuments();
-    }
+    // Show documents
+    showDocuments();
 
-    // Show images (if available)
-    if (imageCount > 0) {
-        showImages();
-    }
+    // Show image documents (if available)
+    if (specificationImages.length > 0) {
 
-    updateGeneratingMessage();
+        if (!imagesShown) {
+            showImages();
+        }
+
+        for (const image of specificationImages) {
+            if (renderedImages.includes(image.id)) {
+                continue;
+            }
+
+            imageCount++;
+            renderImage(image);
+            renderedImages.push(image.id);
+        }
+    }
 
     // Store Documents (for future comparison)
     storedDocuments = documents;
@@ -471,83 +480,85 @@ const generatingMessage = document.getElementById("documents-generating");
 const generatingText = document.getElementById("generating-count");
 
 function updateGeneratingMessage() {
-
     if (generatingCount > 0) {
         generatingText.innerHTML = `${(documentCount - generatingCount) + 1}/${documentCount}`;
         generatingMessage.style.display = "";
-    } else {
-        generatingText.innerHTML = "";
-        generatingMessage.style.display = "none";
+        return;
     }
+
+    generatingText.innerHTML = "";
+    generatingMessage.style.display = "none";
 }
 
 /**
 * Show image carousel
 */
 function showImages() {
+    imagesShown = true;
 
-    // Update visual count
-    imageTotalCount.innerHTML = imageCount;
-
-    // Show gallery
+    // Show image section
     detailImages.classList.add("is-shown");
+    setTimeout(() => detailImages.style.opacity = "", 100); // Slight delay allows animation to play
 
-    // Fade in
-    setTimeout(function () {
-        detailImages.style.opacity = "";
-        setupGallery(); // modules/image-gallery.js
-    }, 100);
+    // Setup gallery carousel - modules/image-gallery.js
+    setupGallery();
 }
 
 /**
 * Show Document list
 */
 function showDocuments() {
+    updateGeneratingMessage();
 
     // Update visual count
-    documentTotalCount.innerHTML = documentCount;
+    documentTotalOutput.innerHTML = documentCount;
 
-    // Show list (with fade)
-    detailDocuments.classList.add("is-shown");
-    setTimeout(function () {
-        detailDocuments.style.opacity = "";
-    }, 100);
+    // Show documents (with fade)
+    detailDocuments.style.opacity = "";
 }
 
 /**
 * Render empty state
 */
 function renderEmptyDocuments() {
-    detailDocuments.innerHTML = '<div class="empty-documents">No documents available for this order at this time.</div>';
+    documentsList.innerHTML = '<div class="empty-documents">No documents available at this time.</div>';
+    detailDocuments.style.opacity = "";
 }
 
 /**
 * Render image to carousel
 */
-function renderImage(image) {
+async function renderImage(image) {
     const id = image.id;
     const displayName = image.name;
     const extension = image.extension
     const resourceName = displayName + extension;
-    const imgUrl = client.getSpecificationDocumentUrl(GROUP_ALIAS, QUERY_SPECIFICATION_ID, id, resourceName);
+    const imgUrl = await client.getSpecificationDocumentUrl(GROUP_ALIAS, QUERY_SPECIFICATION_ID, id, resourceName);
 
     // Generate slide
     const slide = document.createElement("div");
     slide.classList.add("image-slide");
 
-    const img = `<img src="${imgUrl}" alt="" />`;
+    // Generate contents
     const button = document.createElement("button");
-    button.setAttribute("title", "View larger");
+    const img = `<img src="${imgUrl}" alt="" loading="lazy" draggable="false" />`;
     button.innerHTML = img;
-
-    // Attach click event
-    button.onclick = function () {
-        openLightbox(imgUrl); // modules/lightbox.js
-    };
-
-    // Insert slide
+    button.setAttribute("title", "View larger");
+    button.onclick = () => openLightbox(imgUrl); // modules/lightbox.js
     slide.appendChild(button);
+
+    // Append slide to gallery
     galleryImages.appendChild(slide);
+
+    updateImageCount();
+    detectGalleryOverflow();
+}
+
+/**
+* Update rendered total image count
+*/
+function updateImageCount() {
+    imageTotalOutput.innerHTML = imageCount;
 }
 
 /**
@@ -558,7 +569,7 @@ function renderDocument(file) {
     const dateCreated = file.dateCreated;
     const displayName = file.name;
     const extension = file.extension;
-    const cleanExtension = extension.replace(".","");
+    const cleanExtension = extension.replace(".", "");
     const resourceName = displayName + extension;
     const fileExists = file.fileExists;
     const documentUrl = client.getSpecificationDocumentUrl(GROUP_ALIAS, QUERY_SPECIFICATION_ID, id, resourceName);
@@ -572,9 +583,7 @@ function renderDocument(file) {
     const markup = `
         <div class="document-format">
             <div class="file-icon">
-                <svg viewBox="0 0 512 512">
-                    <use xlink:href="#file-blank" />
-                </svg>
+                <svg class="icon"><use xlink:href="dist/icons.svg#file-blank" /></svg>
                 <div class="file-extension type-${cleanExtension}">${cleanExtension}</div>
             </div>
         </div>
@@ -600,7 +609,7 @@ function renderDocument(file) {
                 ${markup}
             </a>
             <a href="${documentUrl}" download title="Download Document" class="download-link">
-                <svg viewBox="0 0 512 512"><use xlink:href="#download-icon" /></svg>
+                <svg class="icon"><use xlink:href="dist/icons.svg#download" /></svg>
             </a>
         `;
 

@@ -7,7 +7,6 @@ body {
   overflow: hidden;
 }
 
-
 /* Page Wrapper */
 .content-wrap {
   height: 100%;
@@ -25,14 +24,12 @@ body {
 }
 
 @media screen and (min-width: 60em) {
-  
+
   .content-inner,
   .has-navigation .content-inner {
     height: 100vh;
   }
-
 }
-
 
 /* Form Output */
 .form-container {
@@ -40,7 +37,6 @@ body {
   height: 100%;
   font-family: 'roboto light', sans-serif; /* Set default font on form content specifically */
 }
-
 
 /* Form Actions (Sidebar Menu) */
 .action-group {
@@ -52,10 +48,13 @@ body {
 }
 
 .action-list button {
+  max-width: 100%;
   padding: 1em 1.5em;
   background: var(--color-neutral);
   color: #fff;
   margin-bottom: 1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .action-list button:hover {
   filter: brightness(110%);
@@ -68,9 +67,7 @@ button.action-transition {
   background: var(--color-success);
 }
 
-
 /* Loading State */
-
 .form-loading {
   display: flex;
   align-items: center;
@@ -93,7 +90,6 @@ button.action-transition {
   font-size: 2em;
   font-weight: 600;
 }
-
 .loading-state .loader {
   display: block;
   font-size: 1.5em;
@@ -106,9 +102,7 @@ button.action-transition {
   animation: spin 1s linear infinite;
 }
 
-
 /* Error */
-
 .run-error {
   text-align: center;
 }
