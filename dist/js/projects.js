@@ -66,11 +66,11 @@ function renderProjects(projects) {
         }
 
         const markup = `
-            <div class="inner" title="${project.name}">
+            <div class="inner">
                 <div class="project-image">
                     <div class="image" style="background-image: url('${imagePath}');"></div>
                 </div>
-                <h4 class="project-name">${name}</h2>
+                <h4 class="project-name">${name}</h4>
                 ${description && '<div class="project-description">' + description + "</div>"}
                 <div class="project-action">Create</div>
             </div>
@@ -81,7 +81,9 @@ function renderProjects(projects) {
         item.classList.add("project-item");
         item.style.setProperty("--index", index);
         item.setAttribute("data-id", project.id);
+        item.setAttribute("data-name", project.name);
         item.href = `run.html?project=${project.name}`;
+        item.title = "Create Specification: " + name;
         item.innerHTML = markup;
 
         projectsList.appendChild(item);
@@ -89,16 +91,4 @@ function renderProjects(projects) {
         // Animate entrance (hidden by default)
         item.classList.add("animate");
     }
-}
-
-/**
- * Store active Specification ID between page changes
- */
-function storeProjectName(name) {
-
-    // Clear any previously stored Transition (to enable creation)
-    localStorage.removeItem("transitionSpecificationId");
-
-    // Set active Project (accessed in form view)
-    localStorage.setItem("activeProjectName", name);
 }

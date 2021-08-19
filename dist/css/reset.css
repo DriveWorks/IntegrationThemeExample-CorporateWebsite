@@ -1,11 +1,10 @@
 @charset "UTF-8";
 
 /*
-	Contextual CSS Reset (.dw-css-reset)
+  Contextual CSS Reset (.dw-css-reset)
 
-	Use this class to ensure child styles are reset to a known default.
-	This corrects site styles being applied to an embedded inline DriveWorks form, as they are not sandboxed (unlike being in iFrame)
-
+  Use this class to ensure child styles are reset to a known default.
+  This corrects site styles being applied to an embedded inline DriveWorks form, as they are not sandboxed (unlike being in iFrame)
 */
 
 .dw-css-reset *,

@@ -9,6 +9,7 @@ const SPECIFICATION_PING_INTERVAL = config.specificationPingInterval;
 const URL_QUERY = new URLSearchParams(window.location.search);
 const QUERY_PROJECT_NAME = URL_QUERY.get("project");
 const QUERY_SPECIFICATION_ID = URL_QUERY.get("specification");
+const QUERY_DRIVE_APP_ALIAS = URL_QUERY.get("driveApp");
 
 // Get elements
 const CONTENT_NAVIGATION = document.getElementById("content-navigation");
@@ -22,8 +23,8 @@ let specificationId;
  * On page load
  */
 (async function () {
-    if (!QUERY_SPECIFICATION_ID && !QUERY_PROJECT_NAME) {
-        renderError("Invalid Project or Specification.");
+    if (!QUERY_SPECIFICATION_ID && !QUERY_PROJECT_NAME && !QUERY_DRIVE_APP_ALIAS) {
+        renderError("Invalid Specification Id, Project name or DriveApp alias.");
     }
 })();
 
@@ -41,6 +42,13 @@ function startPageFunctions() {
     // New Specification
     if (QUERY_PROJECT_NAME) {
         createSpecification();
+        return;
+    }
+
+    // New DriveApp
+    if (QUERY_DRIVE_APP_ALIAS) {
+        createDriveAppSpecification();
+        return;
     }
 }
 
@@ -83,6 +91,29 @@ async function createSpecification() {
         // Render
         specificationId = specification.id;
         renderNewSpecification(specification);
+    } catch (error) {
+        renderError(createError, error);
+    }
+}
+
+/**
+ * Create new DriveApp Specification
+ */
+async function createDriveAppSpecification() {
+    const createError = "Error creating DriveApp Specification.";
+
+    try {
+
+        // Create new DriveApp Specification
+        const driveAppSpecification = await client.runDriveApp(GROUP_ALIAS, QUERY_DRIVE_APP_ALIAS);
+        if (!driveAppSpecification.id) {
+            renderError(createError);
+        }
+
+        // Render
+        specificationId = driveAppSpecification.id;
+        renderNewSpecification(driveAppSpecification);
+
     } catch (error) {
         renderError(createError, error);
     }
@@ -193,37 +224,61 @@ function pingSpecification(specification) {
  * These can be used to expand functionality, or create advanced Control styles.
  */
 async function loadCustomProjectAssets(project) {
+    const customAssetsFolder = "custom-project-assets";
     let projectName;
 
     // Use Project name passed in, or retrieve from Specification details
     if (project) {
         projectName = project;
     } else {
-        const specification = await client.getSpecificationById(GROUP_ALIAS, SPECIFICATION_ID);
+        const specification = await client.getSpecificationById(GROUP_ALIAS, specificationId);
         projectName = specification.originalProjectName;
     }
 
     // Clean Project name
-    projectName = projectName.replace(" ", "-").toLowerCase();
+    const cleanProjectName = normalizeString(projectName);
 
     // Add class to body filename
-    document.body.classList.add(`dw-project-${projectName}`);
+    document.body.classList.add(`dw-project-${cleanProjectName}`);
 
-    // Append additional script files (.js), based on current Project name
-    const script = document.createElement("script");
-    script.src = `custom-project-assets/${projectName}.js`;
-    if (fileExists(script.src)) {
-        document.head.appendChild(script);
+    // Load custom assets
+    const assetPath = `${customAssetsFolder}/${cleanProjectName}`;
+    await Promise.allSettled([
+        loadCustomStyles(assetPath),
+        loadCustomScripts(assetPath)
+    ]);
+}
+
+/**
+ * [OPTIONAL] Append additional script file (.js)
+ */
+async function loadCustomScripts(path) {
+    const filePath = `${path}.js`;
+    const validScripts = await fileExists(filePath);
+    if (!validScripts) {
+        return;
     }
 
-    // Append additional style files (.css), based on current Project name
+    const script = document.createElement("script");
+    script.src = filePath;
+    document.head.appendChild(script);
+}
+
+/**
+ * [OPTIONAL] Append additional stylesheet (.css)
+ */
+async function loadCustomStyles(path) {
+    const filePath = `${path}.css`;
+    const validStyles = await fileExists(filePath);
+    if (!validStyles) {
+        return;
+    }
+
     const style = document.createElement("link");
     style.setAttribute("rel", "stylesheet");
     style.setAttribute("type", "text/css");
-    style.setAttribute("href", `custom-project-assets/${projectName}.css`);
-    if (fileExists(style.href)) {
-        document.head.appendChild(style);
-    }
+    style.setAttribute("href", filePath);
+    document.head.appendChild(style);
 }
 
 /**
@@ -444,17 +499,14 @@ async function getFormData() {
 /**
  * Check for existence of additional files
  */
-function fileExists(url) {
-    const http = new XMLHttpRequest();
-    http.open("HEAD", url, false);
-    http.send();
-
-    if (http.status === 200) {
-        console.log(`Additional file loaded: ${url}`);
-        return true;
+async function fileExists(url) {
+    const response = await fetch(url, { method: "HEAD" });
+    if (!response.ok) {
+        console.log(`Could not find file: ${url}`);
+        console.log("Create this file to apply additional functionality.");
+        return false;
     }
 
-    console.log(`Could not find file: ${url}`);
-    console.log("Create this file to apply additional functionality.");
-    return false;
+    console.log(`Additional file loaded: ${url}`);
+    return true;
 }

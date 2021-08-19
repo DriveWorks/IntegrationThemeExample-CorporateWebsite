@@ -7,14 +7,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
 
-    <title>History | DriveWorks</title>
+    <title>DriveApps | DriveWorks</title>
 
     <!-- Core Styles -->
     <link rel="stylesheet" type="text/css" href="dist/css/core.css" />
 
     <!-- Theme Styles (customizable) -->
     <link rel="stylesheet" type="text/css" href="dist/css/theme/theme.css" />
-    <link rel="stylesheet" type="text/css" href="dist/css/theme/history.css" />
+    <link rel="stylesheet" type="text/css" href="dist/css/theme/drive-apps.css" />
 
     <!-- Favicon -->
     <link rel="icon" href="favicon.ico" />
@@ -24,10 +24,11 @@
 
 </head>
 
-<body class="template-history has-navigation is-loading">
+<body class="template-drive-apps has-navigation">
 
     <main class="content-wrap">
 
+        <!-- Navigation -->
         <aside class="content-nav">
 
             <div class="logo-wrap">
@@ -54,13 +55,13 @@
                         </a>
                     </li>
                     <li>
-                        <a href="drive-apps.html">
+                        <a href="drive-apps.html" class="is-current">
                             <svg class="icon"><use xlink:href="dist/icons.svg#drive-apps" /></svg>
                             DriveApps
                         </a>
                     </li>
                     <li>
-                        <a href="history.html" class="is-current">
+                        <a href="history.html">
                             <svg class="icon"><use xlink:href="dist/icons.svg#history" /></svg>
                             History
                         </a>
@@ -88,64 +89,19 @@
 
         </aside>
 
-        <section class="history-inner content-inner">
+        <section class="content-inner">
 
-            <div class="section-title">
-                <h1>History</h1>
-            </div>
+            <div class="drive-app-inner">
 
-            <div class="history-controls">
-                <div class="inner">
-
-                    <div id="history-filter" class="history-filter-name">
-                        <svg class="search-icon icon"><use xlink:href="dist/icons.svg#search" /></svg>
-                        <label for="name-filter-input" hidden>Filter by Name</label>
-                        <input type="text" id="name-filter-input" placeholder="Filter by name..." />
-                        <svg class="loading-icon icon"><use xlink:href="dist/icons.svg#loading-alt" /></svg>
-                    </div>
-
-                    <div class="history-actions">
-
-                        <button id="date-order-toggle" class="date-toggle" title="Reverse Date Order">
-                            <svg class="icon calendar"><use xlink:href="dist/icons.svg#calendar" /></svg>
-                            <svg data-arrow class="icon arrow"><use xlink:href="dist/icons.svg#arrow-up" /></svg>
-                            Date (<span>Newest First</span>)
-                            <svg class="icon loading"><use xlink:href="dist/icons.svg#loading" /></svg>
-                        </button>
-
-                        <button id="expand-toggle" class="expand-toggle" title="Toggle Expanded View">
-                            <span data-icon><svg class="icon"><use xlink:href="dist/icons.svg#expand" /></svg></span>
-                            <span data-text>Expand</span>
-                        </button>
-
-                        <button id="filter-reset-button" class="reset-button">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#reset" /></svg>
-                            Reset
-                            <svg class="icon loading"><use xlink:href="dist/icons.svg#loading" /></svg>
-                        </button>
-
-                    </div>
-
+                <div class="section-title">
+                    <h1>DriveApps</h1>
                 </div>
-            </div>
 
-            <div class="history-headings">
-                <div class="inner">
-                    <div>Name</div>
-                    <div>Status</div>
-                    <div>Last Edited</div>
-                </div>
-            </div>
-
-            <div id="history-list" class="history-list">
-
-                <div id="history-content" class="history-content"></div>
-
-                <div class="history-skeleton page-skeleton">
-                    <div class="skeleton-block"></div>
-                    <div class="skeleton-block"></div>
-                    <div class="skeleton-block"></div>
-                    <div class="skeleton-block"></div>
+                <div id="drive-app-list" class="drive-app-list" style="opacity: 0;">
+                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
+                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
+                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
+                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
                 </div>
 
             </div>
@@ -161,7 +117,7 @@
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="dist/js/core.js"></script>
-    <script src="dist/js/history.js"></script>
+    <script src="dist/js/drive-apps.js"></script>
 
     <!-- Option A) Directly load Client Library -->
     <!-- <script src="https://YOUR-DRIVEWORKS-LIVE-SERVER-URL.COM/DriveworksLiveIntegrationClient.min.js" onload="dwClientLoaded()"></script> -->
@@ -171,7 +127,9 @@
         (function(doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
-            script.onload = () => dwClientLoaded(); // Custom local function run when client has loaded
+            script.onload = () => {
+                dwClientLoaded(); // Custom local function run when client has loaded
+            }
             doc.body.appendChild(script);
         }(document));
     </script>
