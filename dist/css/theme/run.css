@@ -106,3 +106,100 @@ button.action-transition {
 .run-error {
   text-align: center;
 }
+
+/* Custom Dialog */
+.custom-dialog {
+  display: flex;
+  position: absolute;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-dialog .dialog-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,.75);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.custom-dialog .dialog-message {
+  position: relative;
+  padding: 1.5em;
+  background: #fff;
+  border-radius: .5em;
+  opacity: 0;
+  overflow: hidden;
+}
+.custom-dialog .dialog-message p {
+  font-size: 1.2em;
+  margin: 0 0 .5em;
+}
+
+.custom-dialog button {
+  padding: .75em 1.5em;
+  margin: .75em .75em 0 0;
+  background: #ddd;
+  color: #000;
+  border: none;
+  border-radius: 100em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .2s ease;
+}
+.custom-dialog button:hover {
+  filter: brightness(105%);
+}
+
+.custom-dialog button.confirm-button {
+  background: var(--color-neutral);
+  color: #fff;
+}
+
+/* Dialog entrance animation */
+.custom-dialog.open .dialog-overlay {
+  opacity: 1;
+}
+.custom-dialog.open .dialog-message {
+  animation: fade-up .25s ease forwards;
+}
+
+/* Dialog loading animation */
+.custom-dialog.is-loading {
+  pointer-events: none;
+}
+.custom-dialog.is-loading .dialog-message::before,
+.custom-dialog.is-loading .dialog-message::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+}
+.custom-dialog.is-loading .dialog-message::before {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, .9);
+}
+.custom-dialog.is-loading .dialog-message::after {
+  top: 50%;
+  left: 50%;
+  width: 1em;
+  height: 1em;
+  margin-top: -0.5em;
+  margin-left: -0.5em;
+  font-size: 2.5em;
+  border: .2em solid #ddd;
+  border-top-color: var(--accent-dark);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}

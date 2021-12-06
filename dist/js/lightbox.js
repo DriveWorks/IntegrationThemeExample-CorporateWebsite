@@ -18,11 +18,19 @@ document.onkeydown = function (e) {
     }
 };
 
+/**
+ * Open lightbox overlay.
+ * 
+ * @param {string} src - The source of the image to display.
+ */
 function openLightbox(src) {
     lightboxImage.setAttribute("src", src);
     document.body.classList.add("lightbox-open");
 }
 
+/**
+ * Close lightbox overlay.
+ */
 function closeLightbox() {
     document.body.classList.remove("lightbox-open");
 }

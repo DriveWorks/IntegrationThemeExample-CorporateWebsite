@@ -6,7 +6,7 @@ const CREDENTIALS = config.credentials;
 const driveAppList = document.getElementById("drive-app-list");
 
 /**
- * Start page functions
+ * Start page functions.
  */
 async function startPageFunctions() {
 
@@ -16,29 +16,26 @@ async function startPageFunctions() {
     }, 1000);
 
     try {
+        setCustomClientErrorHandler();
 
         // Get DriveApps
         const driveApps = await client.getDriveApps(GROUP_ALIAS);
         clearTimeout(loadingTimeout);
 
-        // Logout if 'driveApps' is undefined (due to no connection)
-        // If no DriveApps are available for the User's Team, an empty Array [] is returned.
-        if (!driveApps) {
-            handleUnauthorizedUser("No connection found.");
-            return;
-        }
+        // (Optional) Order alphabetically by alias
+        const orderedDriveApps = sortDriveAppsByAlias(driveApps);
 
         // Render DriveApps
-        renderDriveApps(driveApps);
-
+        renderDriveApps(orderedDriveApps);
     } catch (error) {
         handleGenericError(error);
-        handleUnauthorizedUser();
     }
 };
 
 /**
- * Render DriveApps to container
+ * Render DriveApps to container.
+ * 
+ * @param {Object} driveApps - DriveAppData object.
  */
 function renderDriveApps(driveApps) {
 
@@ -47,7 +44,7 @@ function renderDriveApps(driveApps) {
     driveAppList.style.opacity = "";
 
     // Empty state
-    if (!driveApps.length) {
+    if (!driveApps || !driveApps.length) {
         driveAppList.innerHTML = `
             <div class="empty-drive-apps">
                 <p>No DriveApps available.</p>
@@ -84,4 +81,14 @@ function renderDriveApps(driveApps) {
         // Animate entrance (hidden by default)
         item.classList.add("animate");
     }
+}
+
+/**
+ * Order DriveApps alphabetically by alias.
+ * @param {Object} driveApps - The unsorted DriveApps to order.
+ */
+function sortDriveAppsByAlias(driveApps) {
+    return driveApps.sort((a, b) => {
+        return a.alias.localeCompare(b.alias, undefined, { numeric: true, caseFirst: "upper" });
+    });
 }

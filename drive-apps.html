@@ -120,16 +120,15 @@
     <script src="dist/js/drive-apps.js"></script>
 
     <!-- Option A) Directly load Client Library -->
-    <!-- <script src="https://YOUR-DRIVEWORKS-LIVE-SERVER-URL.COM/DriveworksLiveIntegrationClient.min.js" onload="dwClientLoaded()"></script> -->
+    <!-- <script src="https://YOUR-DRIVEWORKS-LIVE-SERVER-URL.COM/DriveworksLiveIntegrationClient.min.js" onload="dwClientLoaded()" onerror="dwClientLoadError()"></script> -->
 
     <!-- Option B) Inject Client Library dynamically from server url in config file -->
     <script>
         (function(doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
-            script.onload = () => {
-                dwClientLoaded(); // Custom local function run when client has loaded
-            }
+            script.onerror = () => dwClientLoadError();
+            script.onload = () => dwClientLoaded(); // Custom local function run when client has loaded
             doc.body.appendChild(script);
         }(document));
     </script>

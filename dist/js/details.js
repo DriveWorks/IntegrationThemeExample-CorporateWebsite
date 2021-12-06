@@ -22,6 +22,12 @@ const documentsList = document.getElementById("documents-list");
 const detailImages = document.getElementById("detail-images");
 const galleryImages = document.getElementById("gallery-images");
 
+const documentTotalOutput = document.getElementById("document-total-count");
+const imageTotalOutput = document.getElementById("image-total-count");
+
+const generatingMessage = document.getElementById("documents-generating");
+const generatingText = document.getElementById("generating-count");
+
 // Store data, for comparison on change
 let firstRun = true;
 let imagesShown = false;
@@ -31,9 +37,10 @@ let storedProperties = [];
 let storedDocuments = [];
 let renderedImages = [];
 let refreshTimeout;
+let imageCount = documentCount = generatingCount = 0;
 
 /**
- * On page load
+ * On page load.
  */
 (async function () {
 
@@ -46,7 +53,7 @@ let refreshTimeout;
 })();
 
 /**
- * Start page functions
+ * Start page functions.
  */
 function startPageFunctions() {
     setClientDelegates();
@@ -54,7 +61,7 @@ function startPageFunctions() {
 }
 
 /**
- * Set client delegates
+ * Set client delegates.
  */
 function setClientDelegates() {
 
@@ -65,10 +72,12 @@ function setClientDelegates() {
 }
 
 /**
- * Handle DriveWorks client errors with additional custom logic
+ * Handle DriveWorks client errors with additional custom logic.
+ * 
+ * @param {Object} response - Request response object.
  */
-function customErrorHandler(res) {
-    const statusCode = res.status;
+function customErrorHandler(response) {
+    const statusCode = response.status;
     switch (statusCode) {
 
         // Not found
@@ -106,7 +115,7 @@ function customErrorHandler(res) {
 }
 
 /**
- * Construct Specification details
+ * Construct Specification details.
  */
 async function constructDetails() {
     try {
@@ -148,16 +157,18 @@ async function constructDetails() {
 }
 
 /**
-* Render Specification details
-*/
-async function renderDetails(details) {
+ * Render Specification details.
+ * 
+ * @param {Object} specification - DriveWorks Specification object.
+ */
+async function renderDetails(specification) {
 
-    // Output details if: not stored (first run), objects don't match
-    if (!storedDetails || !objectsEqual(details, storedDetails)) {
-        const name = details.name;
-        const status = details.stateName;
-        const created = details.dateCreated;
-        const edited = details.dateEdited;
+    // Output Specification details if: not stored (first run), objects don't match
+    if (!storedDetails || !objectsEqual(specification, storedDetails)) {
+        const name = specification.name;
+        const status = specification.stateName;
+        const created = specification.dateCreated;
+        const edited = specification.dateEdited;
 
         // Set page title
         pageTitle.innerHTML = name;
@@ -179,14 +190,14 @@ async function renderDetails(details) {
         detailSummary.style.opacity = "";
         detailSummary.appendChild(content);
 
-        // Save details to storage
-        storedDetails = details;
+        // Save Specification details to storage
+        storedDetails = specification;
     }
 }
 
 /**
-* Get Specification Actions (Operations/Transitions)
-*/
+ * Get Specification Actions - Operations/Transitions.
+ */
 async function getActions() {
     try {
 
@@ -233,8 +244,12 @@ async function getActions() {
 }
 
 /**
-* Render button to invoke a given Operation
-*/
+ * Render button to invoke a given Operation.
+ * 
+ * @param {string} name - The name of the Operation.
+ * @param {Object} button - The HTML button element that triggers the Operation.
+ * @param {string[]} messages - The array of query messages returned when requesting the Operation.
+ */
 function renderOperation(name, button, messages) {
 
     // Mark as Operation
@@ -274,8 +289,11 @@ function renderOperation(name, button, messages) {
 }
 
 /**
-* Render button to invoke a given Transition
-*/
+ * Render button to invoke a given Transition.
+ * 
+ * @param {string} name - The name of the Transition.
+ * @param {Object} button - The button element that triggered the Transition.
+ */
 function renderTransition(name, button) {
 
     // Mark as Transition
@@ -292,11 +310,14 @@ function renderTransition(name, button) {
 }
 
 /**
-* Invoke Operation (requires custom callback per operation)
-*/
-async function invokeOperation(operationName, button) {
+ * Invoke Operation - reload page to show changes.
+ * 
+ * @param {string} name - The name of the Operation.
+ * @param {Object} button - The button element that invoked the Operation.
+ */
+async function invokeOperation(name, button) {
     try {
-        await client.invokeOperation(GROUP_ALIAS, QUERY_SPECIFICATION_ID, operationName);
+        await client.invokeOperation(GROUP_ALIAS, QUERY_SPECIFICATION_ID, name);
 
         // Refresh page to update content (causes redirect if deleted)
         location.reload();
@@ -310,9 +331,12 @@ async function invokeOperation(operationName, button) {
 }
 
 /**
-* Invoke Transition (takes user to form running)
-*/
-async function invokeTransition(transitionName, button) {
+ * Invoke Transition - redirect to running Form.
+ * 
+ * @param {string} name - The name of the Transition.
+ * @param {Object} button - The button element that invoked the Transition.
+ */
+async function invokeTransition(name, button) {
 
     // Show processing state
     button.classList.add("is-loading");
@@ -320,7 +344,7 @@ async function invokeTransition(transitionName, button) {
     try {
 
         // Run the Transition
-        await client.invokeTransition(GROUP_ALIAS, QUERY_SPECIFICATION_ID, transitionName);
+        await client.invokeTransition(GROUP_ALIAS, QUERY_SPECIFICATION_ID, name);
 
         // Redirect to form running, show transitioned state
         window.location.href = `run.html?specification=${QUERY_SPECIFICATION_ID}`;
@@ -334,8 +358,8 @@ async function invokeTransition(transitionName, button) {
 }
 
 /**
-* Get Specification Properties
-*/
+ * Get Specification Properties.
+ */
 async function getProperties() {
     try {
         const properties = await client.getSpecificationProperties(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
@@ -354,8 +378,10 @@ async function getProperties() {
 }
 
 /**
-* Render Specification Properties
-*/
+ * Render Specification Properties.
+ * 
+ * @param {Object} properties - An object containing Specification Properties.
+ */
 function renderProperties(properties) {
 
     // Clear out loading state
@@ -390,12 +416,8 @@ function renderProperties(properties) {
 }
 
 /**
-* Get Specification Documents
-*/
-const documentTotalOutput = document.getElementById("document-total-count");
-const imageTotalOutput = document.getElementById("image-total-count");
-let imageCount = documentCount = generatingCount = 0;
-
+ * Get Specification Documents.
+ */
 async function getDocuments() {
     try {
 
@@ -409,8 +431,8 @@ async function getDocuments() {
         }
 
         // Render Documents if:
-        //  - Nothing stored (first load)
-        //  - New Documents returned (objects don't match)
+        // - Nothing stored (first load)
+        // - New Documents returned (objects don't match)
         if (!storedDocuments || !objectsEqual(documents, storedDocuments)) {
             renderDocuments(documents);
         }
@@ -421,8 +443,10 @@ async function getDocuments() {
 }
 
 /**
-* Render Specification Documents
-*/
+ * Render Specification Documents.
+ * 
+ * @param {Object} documents - An object containing Specification Documents (DocumentData).
+ */
 function renderDocuments(documents) {
     const imageFormats = [".jpg", ".jpeg", ".png", ".gif"];
     const specificationImages = [];
@@ -474,11 +498,8 @@ function renderDocuments(documents) {
 }
 
 /**
-* Update the "documents generating" message (count)
-*/
-const generatingMessage = document.getElementById("documents-generating");
-const generatingText = document.getElementById("generating-count");
-
+ * Update the "documents generating" message count.
+ */
 function updateGeneratingMessage() {
     if (generatingCount > 0) {
         generatingText.innerHTML = `${(documentCount - generatingCount) + 1}/${documentCount}`;
@@ -491,8 +512,8 @@ function updateGeneratingMessage() {
 }
 
 /**
-* Show image carousel
-*/
+ * Show image carousel.
+ */
 function showImages() {
     imagesShown = true;
 
@@ -505,8 +526,8 @@ function showImages() {
 }
 
 /**
-* Show Document list
-*/
+ * Show Document list.
+ */
 function showDocuments() {
     updateGeneratingMessage();
 
@@ -518,16 +539,18 @@ function showDocuments() {
 }
 
 /**
-* Render empty state
-*/
+ * Render empty state.
+ */
 function renderEmptyDocuments() {
     documentsList.innerHTML = '<div class="empty-documents">No documents available at this time.</div>';
     detailDocuments.style.opacity = "";
 }
 
 /**
-* Render image to carousel
-*/
+ * Render image to carousel.
+ * 
+ * @param {Object} image - An object representing the carousel image.
+ */
 async function renderImage(image) {
     const id = image.id;
     const displayName = image.name;
@@ -555,15 +578,17 @@ async function renderImage(image) {
 }
 
 /**
-* Update rendered total image count
-*/
+ * Update rendered total image count.
+ */
 function updateImageCount() {
     imageTotalOutput.innerHTML = imageCount;
 }
 
 /**
-* Render Document item
-*/
+ * Render Document item.
+ * 
+ * @param {Object} file - An object representing a single Specification Document.
+ */
 function renderDocument(file) {
     const id = file.id;
     const dateCreated = file.dateCreated;
@@ -624,8 +649,8 @@ function renderDocument(file) {
 }
 
 /**
-* Track sticky header
-*/
+ * Track sticky header.
+ */
 const pageHeader = document.querySelector(".page-title");
 const headerObserver = new IntersectionObserver(
     ([e]) => e.target.classList.toggle("is-stuck", e.intersectionRatio < 1),
@@ -634,24 +659,27 @@ const headerObserver = new IntersectionObserver(
 headerObserver.observe(pageHeader);
 
 /**
-* Handle invalid Session
-*/
+ * Handle invalid Session.
+ */
 function handleInvalidSession() {
     showPageNotification("Your Session has expired.", true);
     clearTimeout(refreshTimeout);
 }
 
 /**
-* Handle connection dropouts
-*/
+ * Handle connection dropouts.
+ */
 function handleNoConnection() {
     showPageNotification("No connection found.");
     clearTimeout(refreshTimeout);
 }
 
 /**
-* Render Specification details
-*/
+ * Show fixed notification above page content.
+ * 
+ * @param {string} notice - The message to display inside the notification.
+ * @param {boolean} showAction - Toggle display of action inside the notification.
+ */
 function showPageNotification(notice, showAction) {
     document.getElementById("notification-message").innerHTML = notice;
     document.getElementById("notification-container").classList.add("is-shown");

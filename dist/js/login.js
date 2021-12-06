@@ -14,59 +14,68 @@ const loginButton = document.getElementById("login-button");
 const loginNotice = document.getElementById("login-notice");
 loginForm.addEventListener("submit", handleLogin);
 
+// Error Messages
+const genericErrorMessage = "There has been an issue.";
+const clientErrorMessage = "Cannot access client.";
+const connectionErrorMessage = "No connection.";
+const authorizationErrorMessage = "Invalid login, please try again.";
+const privateErrorMessage = "Please use a non-private window.";
+
 /**
- * Create client
+ * On page load.
+ */
+(async function() {
+    showLoginNotice();
+})();
+
+/**
+ * Create client.
  */
 let client;
 function dwClientLoaded() {
     try {
         client = new window.DriveWorksLiveClient(SERVER_URL);
     } catch (error) {
-        console.log(error);
-        loginError(false, "Cannot connect to client");
+        loginError(clientErrorMessage, error);
     }
 
     startPageFunctions();
 }
 
 /**
- * Start page functions
+ * Start page functions.
  */
- function startPageFunctions() {
+function startPageFunctions() {
+    handlePasswordToggle();
 
     // Check localStorage support (show warning if not e.g. <= iOS 10 Private Window)
     if (!localStorageSupported()) {
-        // Disable login and show notice
         document.getElementById("login-button").disabled = true;
-        loginNotice.innerText = "Please use a non-private window on this device.";
-        loginNotice.classList.add("error", "is-shown");
+        loginError(privateErrorMessage);
         return;
     }
 
     try {
         // Check if logged in, and redirect
         checkExistingLogin();
-
-        // Display any notices passed e.g. logged out
-        showLoginNotice();
     } catch (error) {
         handleGenericError(error);
     }
 }
 
 /**
- * Handle login with server, store valid Session
+ * Handle login with server, store valid Session.
  *
- * @param evt Form submit event
+ * @param {Object} event - Form submit event.
  */
-async function handleLogin(evt) {
+async function handleLogin(event) {
 
     // Prevent default form handling
-    evt.preventDefault();
+    event.preventDefault();
 
     // Show error if cannot connect to client
     if (!client) {
-        loginError(false, "Cannot connect to client");
+        loginError(clientErrorMessage);
         return;
     }
 
@@ -88,7 +97,7 @@ async function handleLogin(evt) {
 
         // Show error is login failed
         if (!result) {
-            loginError(false, "No connection found.");
+            loginError(connectionErrorMessage);
             return;
         }
 
@@ -107,11 +116,17 @@ async function handleLogin(evt) {
         // Redirect to default location
         window.location.href = LOGIN_REDIRECT_URL;
     } catch (error) {
-        loginError(error);
+        loginError(genericErrorMessage, error);
     }
 }
 
-function loginError(error, noticeText) {
+/**
+ * Handle login errors.
+ * 
+ * @param {string} noticeText - The message to display when directed to the login screen.
+ * @param {Object} [error] - The error object.
+ */
+function loginError(noticeText, error = null) {
     if (error) {
         handleGenericError(error);
     }
@@ -119,32 +134,25 @@ function loginError(error, noticeText) {
     // Remove loading state
     loginButton.classList.remove("is-loading");
 
-    let notice = "Invalid login, please try again.";
-    if (noticeText) {
-        notice = noticeText;
-    }
-
     // Show client error
-    setLoginNotice(notice, "error");
+    setLoginNotice(noticeText, "error");
     showLoginNotice();
 }
 
 /**
- * Set login screen notice
+ * Set login screen notice.
+ * 
+ * @param {string} text - The message to display when directed to the login screen.
+ * @param {string} [state] - The type of message state (error/success/info).
  */
-function setLoginNotice(text, state) {
-    if (!state) {
-        state = "info";
-    }
-
+function setLoginNotice(text, state = "info") {
     const notice = JSON.stringify({ text: text, state: state });
     localStorage.setItem("loginNotice", notice);
 }
 
 /**
- * Show/hide notice on login form
+ * Show notice on login form.
  */
-
 function showLoginNotice() {
     const notice = JSON.parse(localStorage.getItem("loginNotice"));
     if (!notice) {
@@ -165,29 +173,35 @@ function showLoginNotice() {
     localStorage.removeItem("loginNotice");
 }
 
+/**
+ * Hide notice on login form.
+ */
 function hideLoginNotice() {
     loginNotice.classList.remove("is-shown");
 }
 
 /**
- * Toggle password visibility
+ * Handle password visibility toggle.
  */
-const passwordToggle = document.getElementById("password-toggle");
-passwordToggle.onclick = function () {
-    const passwordInput = document.getElementById("login-password");
-    const currentType = passwordInput.type;
+function handlePasswordToggle() {
+    const passwordToggle = document.getElementById("password-toggle");
+    passwordToggle.onclick = function () {
+        const passwordInput = document.getElementById("login-password");
+        const currentType = passwordInput.type;
+    
+        if (currentType === "password") {
+            passwordInput.type = "text";
+            passwordToggle.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#eye-closed"/></svg> Hide';
+            return;
+        }
 
-    if (currentType === "password") {
-        passwordInput.type = "text";
-        passwordToggle.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#eye-closed"/></svg> Hide';
-        return;
-    }
-    passwordInput.type = "password";
-    passwordToggle.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#eye-open"/></svg> Show';
-};
+        passwordInput.type = "password";
+        passwordToggle.innerHTML = '<svg class="icon"><use xlink:href="dist/icons.svg#eye-open"/></svg> Show';
+    };
+}
 
 /**
- * Check existing login (redirect inside app if true)
+ * Check existing login. Automatically login if found.
  */
 async function checkExistingLogin() {
     if (!SESSION_GROUP_ALIAS) {
@@ -206,8 +220,8 @@ async function checkExistingLogin() {
 }
 
 /**
- * Check for localStorage support (used to store session information)
- * Example: Incognito (Private) windows in iOS 10 and below do not allow localStorage (errors when accessed)
+ * Check for localStorage support - used to store session information.
+ * Example: Incognito (Private) windows in iOS 10 and below do not allow localStorage, errors when accessed.
  */
 function localStorageSupported() {
     try {
@@ -220,7 +234,9 @@ function localStorageSupported() {
 }
 
 /**
- * Handle generic errors e.g. tryCatch
+ * Handle generic errors e.g. tryCatch.
+ * 
+ * @param {Object} error - The error object.
  */
 function handleGenericError(error) {
     console.log(error);
