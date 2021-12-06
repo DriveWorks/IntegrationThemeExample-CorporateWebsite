@@ -6,12 +6,15 @@ const imageGallery = document.getElementById("image-gallery");
 const galleryImageContainer = document.getElementById("gallery-images");
 const galleryNextButton = document.getElementById("gallery-next");
 const galleryPrevButton = document.getElementById("gallery-prev");
+
 let currentItem = 0;
+let galleryScrollTimeout;
 
 /**
- * Setup gallery functions
+ * Setup gallery functions.
  */
 function setupGallery() {
+    attachGalleryScrollListener();
     galleryNextButton.onclick = () => updateCarousel("next");
     galleryPrevButton.onclick = () => updateCarousel("prev");
 
@@ -23,7 +26,7 @@ function setupGallery() {
 }
 
 /**
- * Show/hide controls if carousel can be scrolled
+ * Show/hide controls if carousel can be scrolled.
  */
 function detectGalleryOverflow() {
 
@@ -42,14 +45,16 @@ function detectGalleryOverflow() {
 }
 
 /**
- * Detect if gallery has scrolled to the end
+ * Detect if gallery has scrolled to the end.
  */
 function galleryFullyScrolled() {
     return galleryImageContainer.scrollLeft === (galleryImageContainer.scrollWidth - galleryImageContainer.clientWidth);
 }
 
 /**
- * Update carousel position (e.g. next/previous buttons)
+ * Update carousel position.
+ * 
+ * @param {string} direction - The direction to move the carouse (next/previous).
  */
 function updateCarousel(direction) {
     const galleryWidth = galleryImageContainer.clientWidth;
@@ -74,20 +79,20 @@ function updateCarousel(direction) {
 }
 
 /**
- * Detect gallery is scrolling and scroll has ended
+ * Attach gallery scroll listener. Detect if gallery is scrolling, and has scroll has ended.
  */
-let galleryScrollTimeout;
-galleryImageContainer.addEventListener("scroll", () => {
-    clearTimeout(galleryScrollTimeout);
+function attachGalleryScrollListener() {
+    galleryImageContainer.addEventListener("scroll", () => {
+        clearTimeout(galleryScrollTimeout);
 
-    // Detect scrolling has ended
-    galleryScrollTimeout = setTimeout(() => {
+        // Detect scrolling has ended
+        galleryScrollTimeout = setTimeout(() => {
 
-        // Previous button - Check if gallery has been scrolled
-        galleryPrevButton.disabled = galleryImageContainer.scrollLeft > 0 ? false : true;
+            // Previous button - Check if gallery has been scrolled
+            galleryPrevButton.disabled = galleryImageContainer.scrollLeft > 0 ? false : true;
 
-        // Next button - Check if gallery has been scrolled to the end
-        galleryNextButton.disabled = galleryFullyScrolled();
-
-    }, 100);
-});
+            // Next button - Check if gallery has been scrolled to the end
+            galleryNextButton.disabled = galleryFullyScrolled();
+        }, 100);
+    });
+}

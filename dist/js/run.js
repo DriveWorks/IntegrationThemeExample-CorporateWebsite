@@ -15,23 +15,33 @@ const QUERY_DRIVE_APP_ALIAS = URL_QUERY.get("driveApp");
 const CONTENT_NAVIGATION = document.getElementById("content-navigation");
 const FORM_CONTAINER = document.getElementById("form-container");
 const FORM_LOADING_STATE = document.getElementById("form-loading");
+const SPECIFICATION_ACTIONS = document.getElementById("spec-actions");
 
 // Store Specification Id globally
 let specificationId;
 
-/**
- * On page load
- */
-(async function () {
-    if (!QUERY_SPECIFICATION_ID && !QUERY_PROJECT_NAME && !QUERY_DRIVE_APP_ALIAS) {
-        renderError("Invalid Specification Id, Project name or DriveApp alias.");
-    }
-})();
+// Detect current config type based on query values
+let currentConfig = config.project;
+if (QUERY_DRIVE_APP_ALIAS) {
+    currentConfig = config.driveApp;
+}
 
 /**
- * Start page functions
+ * Start page functions.
  */
 function startPageFunctions() {
+    setCustomClientErrorHandler();
+
+    // Show confirmation dialog before logout
+    if (config.run.showWarningOnExit) {
+        enableLogoutConfirmation();
+    }
+
+    // Detect required values
+    if (!QUERY_SPECIFICATION_ID && !QUERY_PROJECT_NAME && !QUERY_DRIVE_APP_ALIAS) {
+        renderError("Invalid Specification Id, Project name or DriveApp alias.");
+        return;
+    }
 
     // Existing Specification
     if (QUERY_SPECIFICATION_ID) {
@@ -53,9 +63,12 @@ function startPageFunctions() {
 }
 
 /**
- * Display render error, redirect to Projects page
+ * Display error when rendering. Redirect after short delay.
+ * 
+ * @param {string} message - The message display on the login screen.
+ * @param {Object} [error] - The error thrown.
  */
-function renderError(message, error) {
+function renderError(message, error = null) {
     if (error) {
         handleGenericError(error);
     }
@@ -68,17 +81,18 @@ function renderError(message, error) {
         </div>
     `;
 
-    // Redirect to Projects page
+    // Redirect to configured cancel location
     setTimeout(function () {
-        window.location.href = "projects.html";
+        window.location.href = currentConfig.redirectOnCancel;
     }, 1000);
 }
 
 /**
- * Create new Specification
+ * Create new Specification.
  */
 async function createSpecification() {
     const createError = "Error creating Specification.";
+    setTabTitle(QUERY_PROJECT_NAME);
 
     try {
 
@@ -97,10 +111,11 @@ async function createSpecification() {
 }
 
 /**
- * Create new DriveApp Specification
+ * Create new DriveApp Specification.
  */
 async function createDriveAppSpecification() {
     const createError = "Error creating DriveApp Specification.";
+    setTabTitle(QUERY_DRIVE_APP_ALIAS);
 
     try {
 
@@ -112,7 +127,7 @@ async function createDriveAppSpecification() {
 
         // Render
         specificationId = driveAppSpecification.id;
-        renderNewSpecification(driveAppSpecification);
+        renderNewSpecification(driveAppSpecification, false);
 
     } catch (error) {
         renderError(createError, error);
@@ -120,13 +135,18 @@ async function createDriveAppSpecification() {
 }
 
 /**
- * Render new Specification to container
+ * Render new Specification to container.
+ * 
+ * @param {Object} specification - DriveWorks Specification object.
  */
-async function renderNewSpecification(specification) {
+async function renderNewSpecification(specification, showSpecificationNameInTitle = true) {
 
     // Render Form markup
     await specification.render(FORM_CONTAINER);
-    const specForm = specification.specificationFormElement;
+    const formElement = specification.specificationFormElement;
+
+    // [OPTIONAL] Show warning dialog when exiting page after Form renders
+    attachPageUnloadDialog();
 
     // Set the default navigation state (open or closed)
     setNavigationState();
@@ -137,7 +157,7 @@ async function renderNewSpecification(specification) {
     // Clear loading state (with delay to hide re-layout)
     removeLoadingState();
 
-    attachSpecificationEvents(specForm);
+    attachSpecificationEvents(formElement);
     registerFormButtons(specification);
 
     // Listen for cancel & close/complete event
@@ -146,13 +166,19 @@ async function renderNewSpecification(specification) {
 
     // Start ping (keep Specification alive)
     pingSpecification(specification);
+
+    // [OPTIONAL] Show Specification Name in browser tab title
+    if (showSpecificationNameInTitle) {
+        setTabTitleSpecificationName(specification);
+    }
 }
 
 /**
- * Render existing Specification in current State (e.g. after Transition)
+ * Render existing Specification in current State e.g. after Transition.
  */
 async function renderExistingSpecification() {
     const existingError = "Error opening existing Specification.";
+    setTabTitle(QUERY_SPECIFICATION_ID);
 
     try {
 
@@ -163,10 +189,13 @@ async function renderExistingSpecification() {
             return;
         }
 
-        // Render
+        // Render Form markup
         specificationId = specification.id;
         await specification.render(FORM_CONTAINER);
-        const form = specification.specificationFormElement;
+        const formElement = specification.specificationFormElement;
+
+        // [OPTIONAL] Show warning dialog when exiting page after Form renders
+        attachPageUnloadDialog();
 
         // Set the default navigation state (open or closed)
         setNavigationState();
@@ -178,25 +207,28 @@ async function renderExistingSpecification() {
         removeLoadingState();
 
         // Register buttons & events
-        attachSpecificationEvents(form);
+        attachSpecificationEvents(formElement);
         registerFormButtons(specification);
-        specification.registerSpecificationClosedDelegate(() => transitionClosed());
-        specification.registerSpecificationCancelledDelegate(() => transitionCancelled());
+        specification.registerSpecificationClosedDelegate(() => existingSpecificationClosed());
+        specification.registerSpecificationCancelledDelegate(() => existingSpecificationCancelled());
 
         // Start ping (keep Specification alive)
         pingSpecification(specification);
+
+        // [OPTIONAL] Show Specification Name in browser tab title
+        setTabTitleSpecificationName(specification);
     } catch (error) {
         renderError(existingError, error);
     }
 }
 
 /**
- * Ping the running Specification
+ * Ping the running Specification.
  *
  * A Specification will timeout after a configured period of inactivity (see DriveWorksConfigUser.xml).
  * This function prevents a Specification timing out as long as the page is in view.
  *
- * @param specification The Specification object.
+ * @param {Object} specification - The Specification object.
  */
 function pingSpecification(specification) {
 
@@ -218,10 +250,12 @@ function pingSpecification(specification) {
 }
 
 /**
- * [OPTIONAL] Load additional Project assets (js/css)
+ * Load additional Project assets (JS/CSS).
  * 
  * Enables custom scripts or styles to be loaded per Project.
  * These can be used to expand functionality, or create advanced Control styles.
+ * 
+ * @param {string} project - The name of the Project to load matching assets.
  */
 async function loadCustomProjectAssets(project) {
     const customAssetsFolder = "custom-project-assets";
@@ -250,7 +284,9 @@ async function loadCustomProjectAssets(project) {
 }
 
 /**
- * [OPTIONAL] Append additional script file (.js)
+ * Append additional script file.
+ * 
+ * @param {string} path - The path of the custom script.
  */
 async function loadCustomScripts(path) {
     const filePath = `${path}.js`;
@@ -265,7 +301,9 @@ async function loadCustomScripts(path) {
 }
 
 /**
- * [OPTIONAL] Append additional stylesheet (.css)
+ * Append additional stylesheet.
+ * 
+ * @param {string} path - The path of the custom stylesheet.
  */
 async function loadCustomStyles(path) {
     const filePath = `${path}.css`;
@@ -282,44 +320,56 @@ async function loadCustomStyles(path) {
 }
 
 /**
- * Detect external navigation (sidebar) display changes
+ * Detect external navigation (sidebar) display changes.
+ * 
+ * @param {boolean} [showNavigation] - Set navigation to be open (true) or closed (false).
  */
-async function setNavigationState(formData) {
-    let showNav = false;
+async function setNavigationState(showNavigation = null) {
 
-    // Use passed data (if available), or query
-    if (formData) {
-        showNav = formData;
-    } else {
-        formData = await client.getSpecificationFormData(GROUP_ALIAS, specificationId);
-        showNav = formData.form.showStandardNavigation;
+    // If no state provided, query from server
+    if (showNavigation == null) {
+        const formData = await client.getSpecificationFormData(GROUP_ALIAS, specificationId);
+        showNavigation = formData.form.showStandardNavigation;
     }
 
     // Update visual state
-    showNav ? showNavigation() : hideNavigation();
+    showNavigation ? showFormNavigation() : hideFormNavigation();
 }
 
 /**
- * Listen for Form events
+ * Listen for Form events.
+ * 
+ * @param {Object} formElement - Specification Form element.
  */
-function attachSpecificationEvents(specForm) {
-    specForm.addEventListener("FormUpdated", function (evt) {
-        formUpdated(evt);
-    });
+function attachSpecificationEvents(formElement) {
+    formElement.addEventListener("FormUpdated", event => formUpdated(event));
+    formElement.addEventListener("ActionsUpdated", event => renderSpecificationActions(event));
+}
 
-    specForm.addEventListener("ActionsUpdated", function (evt) {
-        renderSpecificationActions(evt);
-    });
+/**
+ * Cancel Specification.
+ */
+async function cancelSpecification() {
+    detachPageUnloadDialog();
+    await client.cancelSpecification(GROUP_ALIAS, specificationId);
 }
 
 /**
  * Register Form Action buttons
  */
 function registerFormButtons(specification) {
-    document.getElementById("specification-cancel-button").onclick = function () {
-        specification.cancel();
+
+    // Cancel button
+    document.getElementById("specification-cancel-button").onclick = () => {
+        if (config.run.showWarningOnExit) {
+            showConfirmationDialog(cancelSpecification);
+            return;
+        }
+
+        cancelSpecification();
     };
 
+    // Form navigation buttons
     specification.registerNextButton(document.getElementById("form-next-button"));
     specification.registerPreviousButton(document.getElementById("form-previous-button"));
     specification.registerOkButton(document.getElementById("dialog-ok-button"));
@@ -327,10 +377,8 @@ function registerFormButtons(specification) {
 }
 
 /**
-* Render Form Actions (Operation/Transition)
-*/
-const specActions = document.getElementById("spec-actions");
-
+ * Render Form Actions - Operations/Transitions.
+ */
 async function renderSpecificationActions() {
 
     // Get all actions
@@ -340,7 +388,7 @@ async function renderSpecificationActions() {
     if (!isEmpty(actions)) {
 
         // Clear out old actions
-        specActions.innerHTML = "";
+        SPECIFICATION_ACTIONS.innerHTML = "";
 
         for (let actionIndex = 0; actionIndex < actions.length; actionIndex++) {
             const action = actions[actionIndex];
@@ -366,42 +414,46 @@ async function renderSpecificationActions() {
 }
 
 /**
-* Render Operation
-*/
+ * Render Operation.
+ * 
+ * @param {string} name - The name of the Operation.
+ * @param {Object} button - The button to attach click events.
+ */
 function renderOperationAction(name, button) {
 
     // Visually mark as Operation
     button.classList.add("action-operation");
 
     // Attach click
-    button.onclick = function () {
-        invokeOperation(name);
-    };
+    button.onclick = () => invokeOperation(name);
 
-    // Output
-    specActions.appendChild(button);
+    // Output button
+    SPECIFICATION_ACTIONS.appendChild(button);
 }
 
 /**
-* Render Transition
-*/
+ * Render Transition.
+ * 
+ * @param {string} name - The name of the Transition.
+ * @param {Object} button - The button to attach click events.
+ */
 function renderTransitionAction(name, button) {
 
     // Visually mark as Transition
     button.classList.add("action-transition");
 
     // Attach click
-    button.onclick = function () {
-        invokeTransition(name);
-    };
+    button.onclick = () => invokeTransition(name);
 
-    // Output
-    specActions.appendChild(button);
+    // Output button
+    SPECIFICATION_ACTIONS.appendChild(button);
 }
 
 /**
-* Invoke Operation (requires custom callback per Operation)
-*/
+ * Invoke Operation.
+ * 
+ * @param {string} operationName - The name of the Operation to invoke.
+ */
 async function invokeOperation(operationName) {
     try {
         await client.invokeOperation(GROUP_ALIAS, specificationId, operationName);
@@ -411,56 +463,66 @@ async function invokeOperation(operationName) {
 }
 
 /**
-* Invoke Transition
-*/
+ * Invoke Transition.
+ * 
+ * @param {string} transitionName - The name of the Transition to invoke.
+ */
 async function invokeTransition(transitionName) {
     try {
         await client.invokeTransition(GROUP_ALIAS, specificationId, transitionName);
-        window.location.href = `details.html?specification=${specificationId}`;
+
+        detachPageUnloadDialog();
+        window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
     } catch (error) {
         handleGenericError(error);
     }
 }
 
 /**
- * Triggers on Form update
+ * Triggers on Form update.
+ * 
+ * @param {Object} event - FormUpdated event object.
  */
-function formUpdated(evt) {
+function formUpdated(event) {
 
     // Update navigation state (may have changed)
-    setNavigationState(evt.detail.specData.showStandardNavigation);
+    const navState = event.detail.specData.showStandardNavigation;
+    setNavigationState(navState);
 }
 
 /**
- * Triggers on Form close
+ * Form closed.
  */
 function formClosed() {
-    window.location.href = `${config.project.redirectOnClose}?specification=${specificationId}`;
+    detachPageUnloadDialog();
+    window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
 }
 
 /**
- * On Form cancel
+ * Form cancelled.
  */
 function formCancelled() {
-    window.location.href = config.project.redirectOnCancel;
+    detachPageUnloadDialog();
+    window.location.href = currentConfig.redirectOnCancel;
 }
 
 /**
- * On Transition close
+ * Existing Specification closed.
  */
 function transitionClosed() {
-    window.location.href = `details.html?specification=${specificationId}`;
+    detachPageUnloadDialog();
+    window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
 }
 
 /**
- * On Transition cancel
+ * Existing Specification cancelled.
  */
-function transitionCancelled() {
-    window.location.href = `details.html?specification=${specificationId}`;
+function existingSpecificationCancelled() {
+    window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
 }
 
 /**
- * Hide Form loading state
+ * Hide Form loading state.
  */
 function removeLoadingState() {
 
@@ -474,22 +536,30 @@ function removeLoadingState() {
     }, 500);
 }
 
-function showNavigation() {
+/**
+ * Show Form sidebar navigation - containing available Actions.
+ */
+function showFormNavigation() {
     CONTENT_NAVIGATION.style.display = "";
     document.body.classList.add("has-navigation");
 
-    window.dispatchEvent(new Event("resize"));
-}
-
-function hideNavigation() {
-    CONTENT_NAVIGATION.style.display = "none";
-    document.body.classList.remove("has-navigation");
-
+    // Ensure Form size updates when content width changes
     window.dispatchEvent(new Event("resize"));
 }
 
 /**
- * Get Form data (for debugging)
+ * Hide Form sidebar navigation - containing available Actions.
+ */
+function hideFormNavigation() {
+    CONTENT_NAVIGATION.style.display = "none";
+    document.body.classList.remove("has-navigation");
+
+    // Ensure Form size updates when content width changes
+    window.dispatchEvent(new Event("resize"));
+}
+
+/**
+ * Get Form data - for debugging.
  */
 async function getFormData() {
     const formData = await client.getSpecificationFormData(GROUP_ALIAS, specificationId);
@@ -497,7 +567,9 @@ async function getFormData() {
 }
 
 /**
- * Check for existence of additional files
+ * Check for existence of additional files.
+ * 
+ * @param {string} url - URL of file to confirm existence.
  */
 async function fileExists(url) {
     const response = await fetch(url, { method: "HEAD" });
@@ -509,4 +581,134 @@ async function fileExists(url) {
 
     console.log(`Additional file loaded: ${url}`);
     return true;
+}
+
+/**
+ * On page unload, show dialog to confirm navigation.
+ */
+function attachPageUnloadDialog() {
+    if (config.run.showWarningOnExit) {
+        window.addEventListener("beforeunload", beforeUnloadHandler);
+    }
+}
+
+/**
+ * Remove dialog on page unload.
+ */
+function detachPageUnloadDialog() {
+    window.removeEventListener("beforeunload", beforeUnloadHandler);
+}
+
+/**
+ * Handle beforeunload event.
+ * 
+ * @param {Object} event - The beforeunload event object.
+ */
+function beforeUnloadHandler(event) {
+    event.preventDefault();
+    event.returnValue = "Are you sure you want to leave this page?";
+}
+
+/**
+ * Set browser tab title to Specification name
+ * 
+ * @param {Object} specification - DriveWorks Specification object
+ */
+async function setTabTitleSpecificationName(specification) {
+    const formData = await specification.getFormData();
+    setTabTitle(formData.form.specificationName);
+}
+
+/**
+ * Set browser tab title
+ * 
+ * @param {Object} text - The text to display in the title.
+ */
+function setTabTitle(text) {
+    document.title = `${text} | Run - DriveWorks`;
+}
+
+/**
+ * Display confirmation dialog before logout.
+ */
+function enableLogoutConfirmation() {
+
+    // Get all logout buttons
+    const logoutButtons = document.getElementsByClassName("logout-button");
+    if (!logoutButtons) {
+        return;
+    }
+
+    // Remove generic event, trigger custom dialog on click
+    for (const logoutButton of logoutButtons) {
+        logoutButton.removeEventListener("click", handleLogout);
+        logoutButton.addEventListener("click", () => showConfirmationDialog(handleLogout));
+    }
+}
+
+/**
+ * Show custom confirmation dialog.
+ * 
+ * @param {function} confirmAction - The function to trigger on confirmation.
+ * @param {string} [message] - The message to display in the dialog.
+ */
+function showConfirmationDialog(confirmAction, message = "Are you sure?") {
+    if (!confirmAction) {
+        return;
+    }
+
+    const dialog = document.createElement("div");
+    dialog.classList.add("custom-dialog");
+
+    // Overlay
+    const overlay = document.createElement("div");
+    overlay.classList.add("dialog-overlay");
+    overlay.onclick = () => dismissDialog();
+    dialog.appendChild(overlay);
+
+    // Message box
+    const messageBox = document.createElement("div");
+    messageBox.classList.add("dialog-message");
+    messageBox.innerHTML = `<p>${message}</p>`;
+
+    // Confirm button
+    const confirmButton = document.createElement("button");
+    confirmButton.innerHTML = "Confirm";
+    confirmButton.classList.add("confirm-button");
+    confirmButton.onclick = () => {
+        dialog.classList.add("is-loading");
+        confirmAction();
+        document.removeEventListener("keydown", dismissEscKey);
+    };
+    messageBox.appendChild(confirmButton);
+
+    // Cancel button
+    const cancelButton = document.createElement("button");
+    cancelButton.innerHTML = "Cancel";
+    cancelButton.classList.add("cancel-button");
+    cancelButton.onclick = () => dismissDialog();
+    messageBox.appendChild(cancelButton);
+
+    // Show dialog (with animation)
+    dialog.appendChild(messageBox);
+    document.body.appendChild(dialog);
+    setTimeout(() => {
+        dialog.classList.add("open");
+        confirmButton.focus();
+    }, 50);
+
+    // Dismiss dialog
+    const dismissDialog = () => {
+        dialog.remove();
+        document.removeEventListener("keydown", dismissEscKey);
+    }
+
+    // Close with Esc key
+    const dismissEscKey = (evt) => {
+        evt = evt || window.event;
+        if (evt.key === "Escape") {
+            dismissDialog();
+        }
+    }
+    document.addEventListener("keydown", dismissEscKey);
 }

@@ -1,5 +1,5 @@
 # DriveWorks Live - Integration Theme Example - Corporate Website
-### Release: 19.1
+### Release: 19.2
 #### Minimum DriveWorks Version: 18.1
 
 An example of a full Corporate Website built upon the DriveWorks Live Integration Theme API.
@@ -10,17 +10,35 @@ This template is designed to be configured and used as is, or the starting point
 Please note: DriveWorks are not accepting pull requests for this example.  
 Join our [online community](https://my.driveworks.co.uk) for discussion, resources and to suggest other examples.
 
-### Features:
-- Connects to the DriveWorks Live Integration Theme API
-- Login Screen - Customizable login screen, with credentials attached to a config file
-- Projects View - Renders a list of available Projects
-    - Shown on successful login by default - redirect configurable
-- Run View - Render and transition Specifications
-    - Load custom assets matching the current Project name. See /custom-project-assets
-        - Implement advanced customizations using JavaScript and CSS
-- Details View - View Specification details and access documents
-- History View - Search and filter Specifications
-- "Query" Function - create new or edit existing Specifications through a URL query
+### Overview:
+- Dynamically injects the DriveWorks Live Client library script using the configured server url (see config.js).
+    - Provides an example of loading from a static URL, if preferred.
+- Connects to the DriveWorks Live Integration Theme API.
+- 'Login'
+    - Customizable login screen, with credentials attached to a config file.
+- 'Projects' view
+    - Renders a list of available Projects.
+    - Orders Projects alphabetically by name.
+    - Shown on successful login by default - redirect configurable.
+- 'DriveApps' view
+    - Renders a list of available DriveApps.
+    - Orders DriveApps alphabetically by name.
+- 'Run' view
+    - Render and transition Specifications.
+    - Tab title shows name of running Specification.
+    - Optional warning before navigating from page (where supported)
+        - Set `config.run.showWarningOnExit` to `true` to enable.
+    - Load custom assets (JavaScript/CSS) matching the current Project name.
+        - Implement advanced customizations using JavaScript and CSS.
+        - See `/custom-project-assets` for examples.
+- 'Details' view
+    - View Specification details
+    - Access documents and view images in a basic carousel.
+- 'History' view
+    - Search and filter Specifications.
+    - Change ordering using OData.
+- 'Query' function
+    - Create new or edit existing Specifications through a URL query.
     - Similar to the [DriveWorks Live "Integration Module"](https://docs.driveworkspro.com/topic/IntegrationModuleLive)
     - Examples:
         - /query?run={ProjectName}
@@ -65,6 +83,7 @@ If you are unable to use the dynamic library loading demonstrated in this exampl
         * Ensure you are running DriveWorks 18.2 or above
         * Ensure HTTPS is enabled in DriveWorks Live's settings
         * Ensure a valid SSL certificate has been configured via DriveWorksConfigUser.xml.
+        * Ensure if using an incognito/private window, third-party cookies are not blocked (see browser settings).
         * See [Integration Theme Settings](https://docs.driveworkspro.com/Topic/IntegrationThemeSettings) for additional guidance.
 
 ---

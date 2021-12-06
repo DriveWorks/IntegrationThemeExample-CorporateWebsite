@@ -20,11 +20,14 @@ let filterDateOrder = localStorage.getItem(storageKeyDateOrder) ?? defaultDateOr
 let isLoadingHistory = false;
 let blockLazyLoading = false;
 let expandedView = false;
+let filterTimeout;
 
 /**
- * Start page functions
+ * Start page functions.
  */
 function startPageFunctions() {
+    setCustomClientErrorHandler();
+    attachScrollListener();
 
     // Reset previously stored scroll position
     localStorage.removeItem(storageKeyPosition);
@@ -38,22 +41,27 @@ function startPageFunctions() {
 };
 
 /**
- * Load on scroll
+ * Attach a scroll listener to load items while scrolling down.
  */
-window.onscroll = () => {
+function attachScrollListener() {
+    window.onscroll = () => {
 
-    // If scrolled to the end of the page body
-    if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 1) {
+        // If scrolled to the end of the page body
+        if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 1) {
 
-        // If loading isn't blocked (no more items) or already loading (stop duplication)
-        if (!blockLazyLoading && !isLoadingHistory) {
-            getNextPaginationChunk();
+            // If loading isn't blocked (no more items) or already loading (stop duplication)
+            if (!blockLazyLoading && !isLoadingHistory) {
+                getNextPaginationChunk();
+            }
         }
-    }
-};
+    };
+}
 
 /**
- * Restore previous filter query
+ * Restore previous filter query.
+ * 
+ * @param {number} top - Count of Specifications to return.
+ * @param {number} skip - Count of Specifications to be skipped.
  */
 function getStoredQuery(top, skip) {
     let query = "$top=";
@@ -87,7 +95,10 @@ function getStoredQuery(top, skip) {
 }
 
 /**
- * Get Specifications by query
+ * Get Specifications by query.
+ * 
+ * @param {string} [oDataQueryString] - OData query string to filter Specifications returned.
+ * @param {boolean} [clearList] - Optionally clear rendered list of Specifications.
  */
 async function getSpecificationsWithQuery(oDataQueryString = "", clearList = false) {
 
@@ -96,12 +107,7 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
 
     try {
         const specifications = await client.getAllSpecifications(GROUP_ALIAS, oDataQueryString);
-
-        // If Specifications is undefined (due to no connection)
-        // - if nothing matches the given query, an empty Array [] is returned - not undefined.
-        // - if the user's Session is invalid, an error string is returned - not undefined.
         if (!specifications) {
-            handleUnauthorizedUser("No connection found.");
             return;
         }
 
@@ -130,17 +136,14 @@ async function getSpecificationsWithQuery(oDataQueryString = "", clearList = fal
         renderSpecifications(specifications, clearList);
     } catch (error) {
         handleGenericError(error);
-
-        // If authorization error, handle appropriately
-        if (String(error).includes("401")) {
-            handleUnauthorizedUser();
-            return;
-        }
     }
 }
 
 /**
- * Render Specifications to container
+ * Render Specifications to container.
+ * 
+ * @param {Object} specifications - Object representing DriveWorks Specifications.
+ * @param {boolean} [clearList] - Should the list container be cleared of all elements.
  */
 async function renderSpecifications(specifications, clearList = false) {
 
@@ -161,7 +164,10 @@ async function renderSpecifications(specifications, clearList = false) {
 }
 
 /**
- * Generate history item markup
+ * Generate history item markup.
+ * 
+ * @param {Object} specification - Object representing a single DriveWorks Specification.
+ * @param {number} index - The index of the item in the list. Used for setting animated entrance delay.
  */
 function generateHistoryItem(specification, index) {
     const status = specification.stateName;
@@ -230,7 +236,9 @@ function generateHistoryItem(specification, index) {
 }
 
 /**
- * Get Specification Properties
+ * Get Specification Properties.
+ * 
+ * @param {number} specificationId - The unique id of the Specification.
  */
 async function getSpecificationProperties(specificationId) {
 
@@ -260,7 +268,9 @@ async function getSpecificationProperties(specificationId) {
 }
 
 /**
- * Generate Property markup
+ * Generate Property markup.
+ * 
+ * @param {Object} properties - Object containing Specification Properties.
  */
 function generateProperties(properties) {
     let markup = "";
@@ -277,7 +287,9 @@ function generateProperties(properties) {
 }
 
 /**
- * Filter results by Specification Name
+ * Filter results by Specification name.
+ * 
+ * @param {string} name - Partial or complete name string to filter Specifications shown.
  */
 async function filterSpecificationsByName(name) {
     try {
@@ -300,9 +312,8 @@ async function filterSpecificationsByName(name) {
 }
 
 /**
- * Filter Input: Specification Name
+ * Filter Input: Specification name.
  */
-let filterTimeout;
 nameFilterInput.onkeyup = (e) => {
 
     // Ignore tab navigation (forwards + backwards)
@@ -321,7 +332,7 @@ nameFilterInput.onkeyup = (e) => {
 };
 
 /**
- * Filter Toggle: Date Order
+ * Filter Toggle: date order.
  */
 dateOrderToggle.onclick = () => {
 
@@ -352,6 +363,11 @@ dateOrderToggle.onclick = () => {
     localStorage.setItem(storageKeyDateOrder, filterDateOrder);
 };
 
+/**
+ * Set date order toggle state.
+ * 
+ * @param {string} order - Order to set toggle state (asc/desc).
+ */
 function setDateOrderToggleState(order) {
     // Reset
     dateOrderToggle.classList.remove("order-asc", "order-desc");
@@ -362,7 +378,7 @@ function setDateOrderToggleState(order) {
 }
 
 /**
- * Filter Toggle: Expand (toggle Specification Properties)
+ * Filter toggle: expand - toggle Specification Properties.
  */
 expandToggle.onclick = () => {
 
@@ -389,6 +405,9 @@ expandToggle.onclick = () => {
     });
 };
 
+/**
+ * Set expand toggle state.
+ */
 function setExpandToggleState() {
     const icon = expandToggle.querySelector("[data-icon]");
     const text = expandToggle.querySelector("[data-text]");
@@ -406,7 +425,7 @@ function setExpandToggleState() {
 }
 
 /**
- * Filter Action: Reset
+ * Filter action: reset.
  */
 resetButton.onclick = () => {
 
@@ -439,7 +458,7 @@ resetButton.onclick = () => {
 };
 
 /**
- * Load next chunk of Specification items
+ * Load next chunk of Specification items.
  */
  function getNextPaginationChunk() {
 
@@ -466,7 +485,7 @@ resetButton.onclick = () => {
 }
 
 /**
- * Add loading state
+ * Add loading state element to end of list.
  */
 function addLoadingState() {
 
@@ -486,7 +505,7 @@ function addLoadingState() {
 }
 
 /**
- * Clear loading states
+ * Clear any loading state.
  */
 function clearLoadingState() {
 
@@ -500,7 +519,7 @@ function clearLoadingState() {
 }
 
 /**
- * Clear list
+ * Clear list.
  */
 function clearHistoryList() {
     historyList.innerHTML = "";
@@ -508,7 +527,7 @@ function clearHistoryList() {
 }
 
 /**
- * Clear actions loading states
+ * Clear actions loading states.
  */
 function clearActionsLoading() {
 
@@ -523,14 +542,14 @@ function clearActionsLoading() {
 }
 
 /**
- * Reset rendered Specification Properties
+ * Reset rendered Specification Properties.
  */
  function clearRenderedProperties() {
     renderedProperties = [];
 }
 
 /**
- * Show empty results message
+ * Show empty results message.
  */
 function showEmptyResults() {
 
@@ -545,7 +564,7 @@ function showEmptyResults() {
 }
 
 /**
- * Hide empty results message
+ * Hide empty results message.
  */
 function hideEmptyResults() {
     const empty = document.getElementsByClassName("history-empty");
@@ -555,7 +574,7 @@ function hideEmptyResults() {
 }
 
 /**
- * Reset stored position
+ * Reset stored position.
  */
 function resetFilterPosition() {
     localStorage.removeItem(storageKeyPosition);
@@ -563,14 +582,16 @@ function resetFilterPosition() {
 }
 
 /**
- * Ensure string is valid for use in OData
+ * Ensure string is valid for use in OData.
+ * 
+ * @param {string} string - The string to escape.
  */
- function escapeStringForOData(string) {
+function escapeStringForOData(string) {
     return cleanString = encodeURIComponent(string.replaceAll(/'/g, "''"));
 }
 
 /**
-* Track sticky header (stuck/unstuck)
+* Track sticky header - stuck or unstuck.
 */
 const pageHeader = document.querySelector(".history-controls");
 const headerObserver = new IntersectionObserver(

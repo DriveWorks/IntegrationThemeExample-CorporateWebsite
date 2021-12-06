@@ -3,25 +3,33 @@
  */
 
 const SERVER_URL = config.serverUrl;
-const PING_INTERVAL = config.pingInterval;
 const GROUP_ALIAS = localStorage.getItem("sessionAlias");
 const CURRENT_SESSION = localStorage.getItem("sessionId");
+
 let client;
 
 /**
- * Run on page load
+ * Run on page load.
  */
 (() => {
     // Check if Session Id exists
     checkStoredSessionId();
 
+    // Quick Logout (?bye)
+    // https://docs.driveworkspro.com/Topic/WebThemeLogout
+    const coreQuery = new URLSearchParams(window.location.search);
+    if (coreQuery.has("bye")) {
+        handleLogout();
+    }
+
     showUsername();
-    detectTouchDevice();
     attachLogoutActions();
+    detectTouchDevice();
+    handleMobileNavigationToggle();
 })();
 
 /**
- * DriveWorks Live client library loaded
+ * DriveWorks Live client library loaded.
  */
 function dwClientLoaded() {
     try {
@@ -31,7 +39,7 @@ function dwClientLoaded() {
         // Set session id from stored value - set by and passed from login page
         client._sessionId = getLocalSession();
     } catch (error) {
-        handleUnauthorizedUser("Cannot access client.");
+        dwClientLoadError();
         return;
     }
 
@@ -40,16 +48,14 @@ function dwClientLoaded() {
 }
 
 /**
- * Quick Logout (?bye)
- * https://docs.driveworkspro.com/Topic/WebThemeLogout
+ * DriveWorks Live client library load error.
  */
-const coreQuery = new URLSearchParams(window.location.search);
-if (coreQuery.has("bye")) {
-    handleLogout();
+function dwClientLoadError() {
+    redirectToLogin("Cannot access client.", "error");
 }
 
 /**
- * Check Session Id exists locally
+ * Check Session Id exists locally.
  */
 async function checkStoredSessionId() {
     // If no session is stored (e.g. not logged in), redirect to login
@@ -59,19 +65,33 @@ async function checkStoredSessionId() {
 }
 
 /**
- * Set login screen notice
+ * Add generic client error handling for unauthorized users.
  */
-function setLoginNotice(text, state) {
-    if (!state) {
-        state = "info";
+async function setCustomClientErrorHandler() {
+    client.responseErrorDelegate = (res) => {
+        if (res.status == 401) {
+            handleUnauthorizedUser();
+        }
     }
+}
 
+/**
+ * Set login screen notice.
+ * 
+ * @param {string} text - The text displayed to the user on the login screen.
+ * @param {string} [state] - The type of message state (error/success/info).
+ */
+function setLoginNotice(text, state = "info") {
     const notice = JSON.stringify({text, state});
     localStorage.setItem("loginNotice", notice);
 }
 
 /**
- * Redirect to login screen
+ * Redirect to login screen.
+ * 
+ * @param {string} notice - The text displayed to the user on the login screen.
+ * @param {string} state - The type of message state (error/success/info).
+ * @param {boolean} [noReturnUrl] - Optionally disable return url
  */
 function redirectToLogin(notice, state, noReturnUrl) {
 
@@ -94,6 +114,9 @@ function redirectToLogin(notice, state, noReturnUrl) {
     window.location.replace(`index.html?returnUrl=${encodeURIComponent(currentLocation.substring(1))}`);
 }
 
+/**
+ * Attach logout actions.
+ */
 function attachLogoutActions() {
     const logoutButtons = document.getElementsByClassName("logout-button");
     if (!logoutButtons) {
@@ -106,7 +129,7 @@ function attachLogoutActions() {
 }
 
 /**
- * Redirect on logout (destination set in config)
+ * Redirect on logout.
  */
 function logoutRedirect() {
 
@@ -118,7 +141,7 @@ function logoutRedirect() {
 }
 
 /**
- * Logout action
+ * Logout action.
  */
 async function handleLogout() {
     try {
@@ -130,7 +153,9 @@ async function handleLogout() {
 }
 
 /**
- * Handle unauthorized users
+ * Handle unauthorized users.
+ * 
+ * @param {Object} error - Object representing originating error.
  */
 function handleUnauthorizedUser(error) {
     let message = "Please login to view that.";
@@ -142,58 +167,68 @@ function handleUnauthorizedUser(error) {
 }
 
 /**
- * Mobile navigation toggle (closed by default)
+ * Mobile navigation toggle.
  */
-const navList = document.getElementById("nav-list");
-if (navList) {
-    const navToggle = document.getElementById("nav-toggle");
-    const navClose = document.getElementById("nav-close");
+function handleMobileNavigationToggle() {
+    const navList = document.getElementById("nav-list");
+    if (!navList) {
+        return;
+    }
 
-    navToggle.onclick = function () {
+    document.getElementById("nav-toggle").onclick = function () {
         document.body.classList.toggle("sidebar-open");
     };
 
-    navClose.onclick = function () {
+    document.getElementById("nav-close").onclick = function () {
         document.body.classList.remove("sidebar-open");
     };
 }
 
 /**
- * Split string on uppercase
- * "MyStringValue" => "My String Value"
+ * Split string on uppercase.
+ * "MyStringValue" => "My String Value".
+ * 
+ * @param {string} string - The string to split.
  */
 function splitOnUpperCase(string) {
     return string.split(/(?=[A-Z])/).join(" ");
 }
 
 /**
- * Format string to remove (clean) special characters, lowercase & hyphenate whitespace for class & file names
- * e.g. "Total (Plus VAT) " => "total-plus-vat"
+ * Format string to remove (clean) special characters, lowercase & hyphenate whitespace for class & file names.
+ * e.g. "Total (Plus VAT) " => "total-plus-vat".
+ * 
+ * @param {string} string - The string to normalize.
  */
 function normalizeString(string) {
     string = string.toLowerCase();
-    string = string.replaceAll(/[^a-zA-Z0-9- ]/g, "");
-    string = string.trim();
-    string = string.replaceAll(/ +/g, "-");
+    string = string.replaceAll(/[^a-zA-Z0-9 _-]/g, ""); // Strip all characters excluding: alphanumeric, whitespace, underscore, hyphen
+    string = string.trim(); // Remove outer whitespace
+    string = string.replaceAll(/ +/g, "-"); // Convert whitespace to hyphens
     return string;
 }
 
 /**
- * Check if 2 objects are equal
+ * Check if 2 objects are equal.
+ * 
+ * @param {Object} a - The 1st object to compare.
+ * @param {Object} b - The 2nd object to compare.
  */
 function objectsEqual(a, b) {
-    return JSON.stringify(a) === JSON.stringify(b)
+    return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /**
- * Check object is empty
+ * Check if object is empty.
+ * 
+ * @param {Object} obj - The object to check for content.
  */
 function isEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
 
 /**
- * Visual output of username
+ * Visual output of username.
  */
 function showUsername() {
     const usernameOutput = document.getElementById("active-username");
@@ -207,7 +242,7 @@ function showUsername() {
 }
 
 /**
-* Detect touch devices (alter UI accordingly)
+* Detect touch devices - alter UI accordingly.
 */
 function detectTouchDevice() {
     try {
@@ -219,12 +254,14 @@ function detectTouchDevice() {
 }
 
 /**
- * Get local Session Id from storage (between pages)
+ * Get local Session Id from storage - between pages.
  */
 getLocalSession = () => localStorage.getItem("sessionId");
 
 /**
- * Handle generic error
+ * Handle generic error.
+ * 
+ * @param {Object} error - Error object to handle.
  */
 function handleGenericError(error) {
     console.log(error);

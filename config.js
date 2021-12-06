@@ -8,7 +8,7 @@ const config = {
     // This function prevents a Specification timing out as long as the page is in view.
     // Disable the ping by setting to 0
     specificationPingInterval: 0,
-    // (Optional) Enter custom redirect URLs for login/logout and Project close/cancel
+    // (Optional) Enter custom redirect URLs for login/logout and Project/DriveApp close/cancel
     login: {
         redirectUrl: "projects.html",
     },
@@ -18,6 +18,14 @@ const config = {
     project: {
         redirectOnClose: "details.html",
         redirectOnCancel: "projects.html",
+    },
+    driveApp: {
+        redirectOnClose: "details.html",
+        redirectOnCancel: "drive-apps.html",
+    },
+    // (Optional) Configure 'Run' view
+    run: {
+        showWarningOnExit: false, // Toggle warning dialog when exiting "Run" view with potentially unsaved changes (where supported)
     },
     // (Optional) Configure 'Details' view
     details: {
@@ -33,5 +41,5 @@ const config = {
         requireNewSession: false,
         requireExactAlias: false,
     },
-    loginReturnUrls: true, // Enable/disable return urls to restore the previous location when redirected to the login form
+    loginReturnUrls: true, // Toggle appending return urls to restore the previous location when redirected to the login form 
 };

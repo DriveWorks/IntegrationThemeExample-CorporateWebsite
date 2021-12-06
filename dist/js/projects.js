@@ -6,7 +6,7 @@ const CREDENTIALS = config.credentials;
 const projectsList = document.getElementById("project-list");
 
 /**
- * Start page functions
+ * Start page functions.
  */
 async function startPageFunctions() {
 
@@ -16,28 +16,27 @@ async function startPageFunctions() {
     }, 1000);
 
     try {
+        setCustomClientErrorHandler();
 
         // Get Projects
         const projects = await client.getProjects(GROUP_ALIAS);
         clearTimeout(loadingTimeout);
 
-        // Logout if Projects is undefined (due to no connection)
-        // If no Projects are available for the User's Team, an empty Array [] is returned.
-        if (!projects) {
-            handleUnauthorizedUser("No connection found.");
-            return;
-        }
+        // (Optional) Order Projects alphabetically by alias
+        const orderedProjects = sortProjectsByAlias(projects);
 
         // Render Projects
-        renderProjects(projects);
+        renderProjects(orderedProjects);
+
     } catch (error) {
         handleGenericError(error);
-        handleUnauthorizedUser();
     }
 };
 
 /**
- * Render Projects to container
+ * Render Projects to container.
+ * 
+ * @param {Object} projects - ProjectData object.
  */
 function renderProjects(projects) {
 
@@ -46,7 +45,7 @@ function renderProjects(projects) {
     projectsList.style.opacity = "";
 
     // Empty state
-    if (!projects.length) {
+    if (!projects || !projects.length) {
         projectsList.innerHTML = `
             <div class="empty-projects">
                 <p>No Projects available.</p>
@@ -58,7 +57,7 @@ function renderProjects(projects) {
     // Loop out Projects
     for (let index = 0; index < projects.length; index++) {
         const project = projects[index];
-        const name = project.alias ? project.alias : project.name;
+        const name = project.alias || project.name;
         const description = project.description;
         let imagePath = project.absoluteImagePath;
         if (!imagePath) {
@@ -91,4 +90,16 @@ function renderProjects(projects) {
         // Animate entrance (hidden by default)
         item.classList.add("animate");
     }
+}
+
+/**
+ * Order Projects alphabetically by alias - using name if unavailable.
+ * @param {Object} projects - The unsorted Projects to order.
+ */
+function sortProjectsByAlias(projects) {
+    return projects.sort((a, b) => {
+        const nameA = a.alias || a.name;
+        const nameB = b.alias || b.name;
+        return nameA.localeCompare(nameB, undefined, { numeric: true, caseFirst: "upper" });
+    });
 }
