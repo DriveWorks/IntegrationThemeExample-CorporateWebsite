@@ -222,7 +222,7 @@ async function getActions() {
                 button.classList.add("action-button");
                 button.innerHTML = `
                     ${title}
-                    <svg viewBox="0 0 512 512"><use xlink:href="#loading-spinner"/></svg>
+                    <svg class="icon"><use xlink:href="dist/icons.svg#loading"/></svg>
                 `;
 
                 // Check type
@@ -317,6 +317,7 @@ function renderTransition(name, button) {
  */
 async function invokeOperation(name, button) {
     try {
+        await client.getSpecificationOperationByName(GROUP_ALIAS, QUERY_SPECIFICATION_ID, name);
         await client.invokeOperation(GROUP_ALIAS, QUERY_SPECIFICATION_ID, name);
 
         // Refresh page to update content (causes redirect if deleted)
@@ -344,10 +345,20 @@ async function invokeTransition(name, button) {
     try {
 
         // Run the Transition
+        await client.getSpecificationTransitionByName(GROUP_ALIAS, QUERY_SPECIFICATION_ID, name);
         await client.invokeTransition(GROUP_ALIAS, QUERY_SPECIFICATION_ID, name);
 
-        // Redirect to form running, show transitioned state
-        window.location.href = `run.html?specification=${QUERY_SPECIFICATION_ID}`;
+        // Check Specification state following Transition
+        const newStateTypeId = await getStateTypeId();
+        if (isRunningState(newStateTypeId)) {
+            // Redirect to running Form, showing state following Transition
+            window.location.href = `run.html?specification=${QUERY_SPECIFICATION_ID}`;
+            return;
+        }
+
+        // Update details without refresh/redirect
+        constructDetails();
+
     } catch (error) {
         handleGenericError(error);
         alert("That Transition cannot be run at this time.");
@@ -355,6 +366,28 @@ async function invokeTransition(name, button) {
         // Remove processing state
         button.classList.remove("is-loading");
     }
+}
+
+/**
+ * Get id of current Specification State Type.
+ */
+async function getStateTypeId() {
+    const specification = await client.getSpecificationById(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
+    return specification.stateType;
+}
+
+/**
+ * Check if State Type is running.
+ * 
+ * @param {number|string} stateType - State Type name or numerical id.
+ */
+function isRunningState(stateType) {
+    const RUNNING_STATE_TYPE_ID = 0;
+
+    if (stateType === "Running" || stateType === RUNNING_STATE_TYPE_ID) {
+        return true;
+    }
+    return false;
 }
 
 /**

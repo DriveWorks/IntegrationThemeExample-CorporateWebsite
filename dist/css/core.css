@@ -24,6 +24,7 @@ svg.icon {
   height: 1em;
   min-width: 1em;
   fill: currentColor;
+  overflow: visible;
 }
 
 /* Main Navigation */
