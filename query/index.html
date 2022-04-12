@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <title>Processing query... | DriveWorks</title>
+    <title>Query processing... | DriveWorks</title>
     <link rel="icon" href="../favicon.ico" />
 
     <style>
@@ -30,7 +30,7 @@
             padding: 2em;
         }
 
-        .loader {
+        .loading-state {
             display: block;
             font-size: 1.5em;
             width: 1em;
@@ -42,11 +42,30 @@
             animation: spin 1s linear infinite;
         }
 
-        .error-message p {
-            font-size: 1em;
-            font-weight: bold;
-            margin: 1em 0 0;
-            color: red;
+        .error-message {
+            display: flex;
+            flex-direction: column;
+        }
+        .error-message .message {
+            display: inline-block;
+            padding: .75em 1em;
+            margin: 0 0 .75em;
+            background-color: #ef4444;
+            color: #fff;
+            border-radius: .25em;
+        }
+        .error-message a {
+            font-size: .875em;
+            padding: 1em 0;
+            color: #4299e1;
+            text-decoration: underline;
+        }
+        .error-message a:hover {
+            text-decoration: none;
+        }
+
+        .hidden {
+            display: none;
         }
 
         @keyframes spin {
@@ -59,8 +78,11 @@
 <body class="template-query">
 
     <div class="container">
-        <div class="loader"></div>
-        <div class="error-message"></div>
+        <div data-loading-state class="loading-state"></div>
+
+        <div data-error-message class="error-message hidden">
+            <a href="../index.html">Back to login</a>
+        </div>
     </div>
 
     <!-- Scripts -->

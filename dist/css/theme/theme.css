@@ -40,7 +40,7 @@ textarea {
   font-size: 100%;
 }
 
-button:focus {
+button:not(.dw-controlButton):focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-focus);
 }

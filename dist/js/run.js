@@ -5,11 +5,35 @@
 // Get config
 const SPECIFICATION_PING_INTERVAL = config.specificationPingInterval;
 
-// Get url query
+// Get URL query values
 const URL_QUERY = new URLSearchParams(window.location.search);
 const QUERY_PROJECT_NAME = URL_QUERY.get("project");
 const QUERY_SPECIFICATION_ID = URL_QUERY.get("specification");
 const QUERY_DRIVE_APP_ALIAS = URL_QUERY.get("driveApp");
+
+const QUERY_PREFIX_CONSTANTS = "DWConstant";
+const QUERY_PREFIX_MACROS = "DWMacro";
+const specificationQueryParameters = [];
+for (const [key, value] of URL_QUERY) {
+
+    // Constant to update (name, value)
+    if (key.startsWith(QUERY_PREFIX_CONSTANTS)) {
+        specificationQueryParameters.push({
+            type: QUERY_PREFIX_CONSTANTS,
+            name: key.replace(QUERY_PREFIX_CONSTANTS, ""),
+            value: value
+        });
+    }
+
+    // Macro to run (name, argument [optional])
+    if (key.startsWith(QUERY_PREFIX_MACROS)) {
+        specificationQueryParameters.push({
+            type: QUERY_PREFIX_MACROS,
+            name: key.replace(QUERY_PREFIX_MACROS, ""),
+            argument: value
+        });
+    }
+}
 
 // Get elements
 const CONTENT_NAVIGATION = document.getElementById("content-navigation");
@@ -101,9 +125,9 @@ async function createSpecification() {
         if (!specification.id) {
             renderError(createError);
         }
+        specificationId = specification.id;
 
         // Render
-        specificationId = specification.id;
         renderNewSpecification(specification);
     } catch (error) {
         renderError(createError, error);
@@ -124,11 +148,10 @@ async function createDriveAppSpecification() {
         if (!driveAppSpecification.id) {
             renderError(createError);
         }
+        specificationId = driveAppSpecification.id;
 
         // Render
-        specificationId = driveAppSpecification.id;
         renderNewSpecification(driveAppSpecification, false);
-
     } catch (error) {
         renderError(createError, error);
     }
@@ -140,6 +163,9 @@ async function createDriveAppSpecification() {
  * @param {Object} specification - DriveWorks Specification object.
  */
 async function renderNewSpecification(specification, showSpecificationNameInTitle = true) {
+
+    // Process Specification parameters from query (if supplied)
+    await processSpecificationQueryParameters();
 
     // Render Form markup
     await specification.render(FORM_CONTAINER);
@@ -188,9 +214,12 @@ async function renderExistingSpecification() {
             renderError(existingError);
             return;
         }
+        specificationId = specification.id;
+
+        // Process Specification parameters from query (if supplied)
+        await processSpecificationQueryParameters();
 
         // Render Form markup
-        specificationId = specification.id;
         await specification.render(FORM_CONTAINER);
         const formElement = specification.specificationFormElement;
 
@@ -450,12 +479,65 @@ function renderTransitionAction(name, button) {
 }
 
 /**
+ * Process Macro and Constant data passed as query parameters.
+ */
+async function processSpecificationQueryParameters() {
+    for (const parameter of specificationQueryParameters) {
+        switch (parameter.type) {
+            case QUERY_PREFIX_CONSTANTS:
+                await driveConstant(parameter);
+                break;
+            case QUERY_PREFIX_MACROS:
+                await runMacro(parameter);
+                break;
+        }
+    }
+}
+
+/**
+ * Drive Constant value.
+ * @param {Object} constant - Object containing the Constant name and value.
+ */
+async function driveConstant(constant) {
+    const constantName = constant.name;
+    const constantValue = constant.value;
+
+    try {
+        await client.getSpecificationConstantByName(GROUP_ALIAS, specificationId, constantName);
+        await client.updateConstantValue(GROUP_ALIAS, specificationId, constantName, constantValue);
+    } catch (error) {
+        console.log(error);
+        console.log(`Unable to set the value of Constant '${constantName}' to '${constantValue}'.`);
+    }
+}
+
+/**
+ * Run a Macro.
+ * @param {Object} macro - Object containing the Macro name and argument.
+ */
+async function runMacro(macro) {
+    const macroName = macro.name;
+    const macroArgument = macro.argument;
+
+    try {
+        await client.runMacro(GROUP_ALIAS, specificationId, {
+            macroName: macroName,
+            macroArgument: macroArgument
+        });
+    } catch (error) {
+        console.log(error);
+        console.log(`Unable to run Macro '${macroName}'. ${macroArgument ? `(Argument: ${macroArgument})` : "(No argument specified)"}`);
+    }
+}
+
+/**
  * Invoke Operation.
  * 
  * @param {string} operationName - The name of the Operation to invoke.
  */
 async function invokeOperation(operationName) {
     try {
+        await client.getSpecificationOperationByName(GROUP_ALIAS, specificationId, operationName);
         await client.invokeOperation(GROUP_ALIAS, specificationId, operationName);
     } catch (error) {
         handleGenericError(error);
@@ -469,6 +551,7 @@ async function invokeOperation(operationName) {
  */
 async function invokeTransition(transitionName) {
     try {
+        await client.getSpecificationTransitionByName(GROUP_ALIAS, specificationId, transitionName);
         await client.invokeTransition(GROUP_ALIAS, specificationId, transitionName);
 
         detachPageUnloadDialog();
@@ -509,7 +592,7 @@ function formCancelled() {
 /**
  * Existing Specification closed.
  */
-function transitionClosed() {
+function existingSpecificationClosed() {
     detachPageUnloadDialog();
     window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
 }

@@ -299,11 +299,15 @@ button {
   margin-left: auto;
   font-weight: 600;
   transition:
+    filter .3s ease,
     background-color .3s ease,
     color .3s ease;
 }
+.history-item .view-action:hover {
+  filter: brightness(110%);
+}
 .history-item .item-details:hover .view-action {
-  background-color: var(--color-focus);
+  background-color: var(--color-neutral);
   color: #fff;
 }
 
