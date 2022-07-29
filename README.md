@@ -1,5 +1,5 @@
 # DriveWorks Live - Integration Theme Example - Corporate Website
-### Release: 20.0
+### Release: 20.1
 #### Minimum DriveWorks Version: 18.1
 
 An example of a full Corporate Website built upon the DriveWorks Live Integration Theme API.
@@ -30,7 +30,7 @@ Join our [online community](https://my.driveworks.co.uk) for discussion, resourc
 - 'Run' view
     - Render and transition Specifications.
     - Tab title shows name of running Specification.
-    - Optional warning before navigating from page (where supported)
+    - Optional warning before navigating from page (where supported).
         - Set `config.run.showWarningOnExit` to `true` to enable.
     - Load custom assets (JavaScript/CSS) matching the current Project name.
         - Implement advanced customizations using JavaScript and CSS.
@@ -61,15 +61,15 @@ Join our [online community](https://my.driveworks.co.uk) for discussion, resourc
     * `specificationPingInterval` - [optional] The interval at which to 'ping' the server automatically
         * This ensures a session is kept alive during inactivity, if desired.
     * *Optional*:
-        * Configure various redirects (login, logout, specification close/cancel)
-        * Configure update intervals (Details view)
+        * Configure various redirects (login, logout, specification close/cancel).
+        * Configure update intervals (Details view).
         * Configure 'Query' function settings and defaults
 
-3. Ensure that the Integration Theme server is running, using any of the available methods (e.g. Personal Web Edition, DriveWorks Live, IIS)
+3. Ensure that the Integration Theme server is running, using any of the available methods (e.g. Personal Web Edition, DriveWorks Live, IIS).
     * For more information, see [Selecting the Integration Theme](https://docs.driveworkspro.com/Topic/IntegrationThemeSelect).
 
 4. Host the example locally or on a remote server.
-    * Ensure `<corsOrigins>` in DriveWorksConfigUser.xml permits request from this location.
+    * Ensure `<corsOrigins>` in DriveWorksConfigUser.xml permits requests from this location.
     See [Integration Theme Settings](https://docs.driveworkspro.com/Topic/IntegrationThemeSettings) for additional guidance.
 
 ### Troubleshooting:
