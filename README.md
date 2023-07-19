@@ -7,12 +7,6 @@ Its features are based on the Web Theme's "Corporate Skin".
 
 This template is designed to be configured and used as is, or the starting point for a larger application.
 
----
-
-Please note: DriveWorks are not accepting pull requests for this example.  
-Join our [online community](https://my.driveworks.co.uk) for discussion, resources and to suggest other examples.
-
----
 
 ### Overview:
 - Dynamically injects the DriveWorks Live Client library script using the configured server url (see config.js).
@@ -50,7 +44,7 @@ Join our [online community](https://my.driveworks.co.uk) for discussion, resourc
         - /query?specification={SpecificationName}&transition={TransitionName}
 
 ### To use:
-1. Clone this repository, or download as a .zip
+1. Download latest stable release as zip and unzip into a folder of your choosing. 
 
 2. Enter your Integration Theme details into `config.js`
     * `serverUrl` - The URL that hosts your Integration Theme, including any ports.
@@ -94,8 +88,5 @@ If you are unable to use the dynamic library loading demonstrated in this exampl
         * See [Integration Theme Settings](https://docs.driveworkspro.com/Topic/IntegrationThemeSettings) for additional guidance.
 
 ---
-
-This source code has been made available to demonstrate how you can integrate with DriveWorks using the DriveWorks Live API.
-This code is provided under the MIT license. For more details, see the included LICENSE file.
 
 The example requires that you have the latest DriveWorks Live SDK installed, operational and remotely accessible.
