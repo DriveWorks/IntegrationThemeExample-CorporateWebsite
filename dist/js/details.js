@@ -29,13 +29,13 @@ const generatingMessage = document.getElementById("documents-generating");
 const generatingText = document.getElementById("generating-count");
 
 // Store data, for comparison on change
-let firstRun = true;
-let imagesShown = false;
+const renderedImages = [];
 let storedDetails = [];
 let storedActions = [];
 let storedProperties = [];
 let storedDocuments = [];
-let renderedImages = [];
+let firstRun = true;
+let imagesShown = false;
 let refreshTimeout;
 let imageCount = documentCount = generatingCount = 0;
 
