@@ -5,7 +5,6 @@
 const SERVER_URL = config.serverUrl;
 const LOGIN_REDIRECT_URL = config.login.redirectUrl;
 const GROUP_ALIAS = config.groupAlias;
-const SESSION_GROUP_ALIAS = localStorage.getItem("sessionAlias");
 const URL_QUERY = new URLSearchParams(window.location.search);
 
 // Elements
@@ -21,6 +20,9 @@ const connectionErrorMessage = "No connection.";
 const authorizationErrorMessage = "Invalid login, please try again.";
 const privateErrorMessage = "Please use a non-private window.";
 
+// DriveWorks Live Client
+let client;
+
 /**
  * On page load.
  */
@@ -31,12 +33,17 @@ const privateErrorMessage = "Please use a non-private window.";
 /**
  * Create client.
  */
-let client;
-function dwClientLoaded() {
+async function dwClientLoaded() {
     try {
         client = new window.DriveWorksLiveClient(SERVER_URL);
     } catch (error) {
         loginError(clientErrorMessage, error);
+    }
+
+    // Quick Logout (?bye)
+    // https://docs.driveworkspro.com/Topic/WebThemeLogout
+    if (URL_QUERY.has("bye")) {
+        await forceLogout();
     }
 
     startPageFunctions();
@@ -204,19 +211,40 @@ function handlePasswordToggle() {
  * Check existing login. Automatically login if found.
  */
 async function checkExistingLogin() {
-    if (!SESSION_GROUP_ALIAS) {
+    const storedGroupAlias = localStorage.getItem("sessionAlias");
+    if (!storedGroupAlias) {
         return;
     }
 
     try {
         // Test connection
-        await client.getProjects(SESSION_GROUP_ALIAS, "$top=1");
+        await client.getProjects(storedGroupAlias, "$top=1");
 
         // Redirect to initial location
         window.location.replace(LOGIN_REDIRECT_URL);
     } catch (error) {
         handleGenericError(error);
     }
+}
+
+/**
+ * Force logout and session data clearing.
+ */
+async function forceLogout() {
+
+    // Logout from all Groups.
+    try {
+        await client.logoutAllGroups();
+    } catch(error) {
+        handleGenericError(error);
+    }
+
+    // Clear session information from storage.
+    localStorage.clear();
+
+    // Show login screen message.
+    setLoginNotice("You have been logged out.", "success");
+    showLoginNotice();
 }
 
 /**

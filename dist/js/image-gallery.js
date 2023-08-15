@@ -6,8 +6,6 @@ const imageGallery = document.getElementById("image-gallery");
 const galleryImageContainer = document.getElementById("gallery-images");
 const galleryNextButton = document.getElementById("gallery-next");
 const galleryPrevButton = document.getElementById("gallery-prev");
-
-let currentItem = 0;
 let galleryScrollTimeout;
 
 /**

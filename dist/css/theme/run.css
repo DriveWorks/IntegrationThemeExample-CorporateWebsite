@@ -39,24 +39,23 @@ body {
 }
 
 /* Form Actions (Sidebar Menu) */
-.action-group {
-  opacity: 0;
-  transition: opacity .3s ease;
-}
-.actions-shown .action-group {
-  opacity: 1;
-}
-
 .action-list button {
   max-width: 100%;
   padding: 1em 1.5em;
+  margin-bottom: 1em;
   background: var(--color-neutral);
   color: #fff;
-  margin-bottom: 1em;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
 }
-.action-list button:hover {
+
+.action-list button[disabled] {
+  opacity: .25;
+  cursor: default;
+}
+
+.action-list button:not([disabled]):hover {
   filter: brightness(110%);
 }
 

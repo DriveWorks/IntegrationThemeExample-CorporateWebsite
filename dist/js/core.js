@@ -15,13 +15,6 @@ let client;
     // Check if Session Id exists
     checkStoredSessionId();
 
-    // Quick Logout (?bye)
-    // https://docs.driveworkspro.com/Topic/WebThemeLogout
-    const coreQuery = new URLSearchParams(window.location.search);
-    if (coreQuery.has("bye")) {
-        handleLogout();
-    }
-
     showUsername();
     attachLogoutActions();
     detectTouchDevice();
@@ -40,6 +33,14 @@ function dwClientLoaded() {
         client._sessionId = getLocalSession();
     } catch (error) {
         dwClientLoadError();
+        return;
+    }
+
+    // Quick Logout (?bye)
+    // https://docs.driveworkspro.com/Topic/WebThemeLogout
+    const coreQuery = new URLSearchParams(window.location.search);
+    if (coreQuery.has("bye")) {
+        handleLogout();
         return;
     }
 
