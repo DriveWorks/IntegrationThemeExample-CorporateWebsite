@@ -26,10 +26,15 @@ const config = {
     // (Optional) Configure 'Run' view
     run: {
         showWarningOnExit: false, // Toggle warning dialog when exiting "Run" view with potentially unsaved changes (where supported)
+        loadCustomProjectAssets: {
+            scripts: false,
+            styles: false,
+        },
     },
     // (Optional) Configure 'Details' view
     details: {
         updateInterval: 5, // Interval to refresh content - in seconds
+        showStartNewSpecificationAction: true,
     },
     // (Optional) Configure the query function
     // Enter a default Group Alias and/or Project name to be used (when none are passed in the query string)

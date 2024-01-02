@@ -13,6 +13,7 @@ const QUERY_SPECIFICATION_ID = URL_QUERY.get("specification");
 const pageTitle = document.getElementById("page-title");
 const pageActions = document.getElementById("page-actions");
 
+const detailHeader = document.getElementById("detail-header");
 const detailSummary = document.getElementById("detail-summary");
 const detailProperties = document.getElementById("detail-properties");
 
@@ -30,14 +31,16 @@ const generatingText = document.getElementById("generating-count");
 
 // Store data, for comparison on change
 const renderedImages = [];
-let storedDetails = [];
-let storedActions = [];
-let storedProperties = [];
-let storedDocuments = [];
+let storedSpecification;
+let storedActions;
+let storedProperties;
+let storedDocuments;
+let refreshTimeout;
 let firstRun = true;
 let imagesShown = false;
-let refreshTimeout;
-let imageCount = documentCount = generatingCount = 0;
+let imageCount = 0;
+let documentCount = 0;
+let generatingCount = 0;
 
 /**
  * On page load.
@@ -73,7 +76,7 @@ function setClientDelegates() {
 
 /**
  * Handle DriveWorks client errors with additional custom logic.
- * 
+ *
  * @param {Object} response - Request response object.
  */
 function customErrorHandler(response) {
@@ -150,6 +153,9 @@ async function constructDetails() {
             constructDetails();
         }, DETAILS_UPDATE_INTERVAL);
 
+        // Show add action
+        appendNewSpecificationAction(specification.originalProjectName);
+
         firstRun = false;
     } catch (error) {
         handleGenericError(error);
@@ -158,17 +164,20 @@ async function constructDetails() {
 
 /**
  * Render Specification details.
- * 
+ *
  * @param {Object} specification - DriveWorks Specification object.
  */
 async function renderDetails(specification) {
 
     // Output Specification details if: not stored (first run), objects don't match
-    if (!storedDetails || !objectsEqual(specification, storedDetails)) {
+    if (!storedSpecification || !objectsEqual(specification, storedSpecification)) {
         const name = specification.name;
         const status = specification.stateName;
         const created = specification.dateCreated;
         const edited = specification.dateEdited;
+
+        // Save Specification details to storage
+        storedSpecification = specification;
 
         // Set page title
         pageTitle.innerHTML = name;
@@ -189,10 +198,35 @@ async function renderDetails(specification) {
         detailSummary.innerHTML = "";
         detailSummary.style.opacity = "";
         detailSummary.appendChild(content);
-
-        // Save Specification details to storage
-        storedDetails = specification;
     }
+}
+
+/**
+ * Append "New Specification" action, if the user has the required permission.
+ *
+ * @param {string} originalProjectName - Name of DriveWorks Project this Specification was created from.
+ */
+async function appendNewSpecificationAction(originalProjectName) {
+    if (config.details.showStartNewSpecificationAction !== true || !firstRun) {
+        return;
+    }
+
+    // Confirm if user can run this Project
+    const matchingProjectCount = (await client.getProjects(GROUP_ALIAS, `$filter=name eq '${originalProjectName}'`)).length;
+    if (matchingProjectCount === 0) {
+        return;
+    }
+
+    // Append "New" action
+    const action = document.createElement("a");
+    action.innerHTML = `
+        <svg class="icon"><use xlink:href="dist/icons.svg#plus" /></svg>
+        <span>New</span>
+    `;
+    action.classList = "new-button button";
+    action.href = `run.html?project=${originalProjectName}`;
+    action.title = "Start new Specification"
+    detailHeader.appendChild(action);
 }
 
 /**
@@ -245,7 +279,7 @@ async function getActions() {
 
 /**
  * Render button to invoke a given Operation.
- * 
+ *
  * @param {string} name - The name of the Operation.
  * @param {Object} button - The HTML button element that triggers the Operation.
  * @param {string[]} messages - The array of query messages returned when requesting the Operation.
@@ -290,7 +324,7 @@ function renderOperation(name, button, messages) {
 
 /**
  * Render button to invoke a given Transition.
- * 
+ *
  * @param {string} name - The name of the Transition.
  * @param {Object} button - The button element that triggered the Transition.
  */
@@ -311,7 +345,7 @@ function renderTransition(name, button) {
 
 /**
  * Invoke Operation - reload page to show changes.
- * 
+ *
  * @param {string} name - The name of the Operation.
  * @param {Object} button - The button element that invoked the Operation.
  */
@@ -333,7 +367,7 @@ async function invokeOperation(name, button) {
 
 /**
  * Invoke Transition - redirect to running Form.
- * 
+ *
  * @param {string} name - The name of the Transition.
  * @param {Object} button - The button element that invoked the Transition.
  */
@@ -378,7 +412,7 @@ async function getStateTypeId() {
 
 /**
  * Check if State Type is running.
- * 
+ *
  * @param {number|string} stateType - State Type name or numerical id.
  */
 function isRunningState(stateType) {
@@ -412,7 +446,7 @@ async function getProperties() {
 
 /**
  * Render Specification Properties.
- * 
+ *
  * @param {Object} properties - An object containing Specification Properties.
  */
 function renderProperties(properties) {
@@ -477,7 +511,7 @@ async function getDocuments() {
 
 /**
  * Render Specification Documents.
- * 
+ *
  * @param {Object} documents - An object containing Specification Documents (DocumentData).
  */
 function renderDocuments(documents) {
@@ -581,7 +615,7 @@ function renderEmptyDocuments() {
 
 /**
  * Render image to carousel.
- * 
+ *
  * @param {Object} image - An object representing the carousel image.
  */
 async function renderImage(image) {
@@ -619,7 +653,7 @@ function updateImageCount() {
 
 /**
  * Render Document item.
- * 
+ *
  * @param {Object} file - An object representing a single Specification Document.
  */
 function renderDocument(file) {
@@ -709,7 +743,7 @@ function handleNoConnection() {
 
 /**
  * Show fixed notification above page content.
- * 
+ *
  * @param {string} notice - The message to display inside the notification.
  * @param {boolean} showAction - Toggle display of action inside the notification.
  */

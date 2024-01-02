@@ -40,6 +40,7 @@ const CONTENT_NAVIGATION = document.getElementById("content-navigation");
 const FORM_CONTAINER = document.getElementById("form-container");
 const FORM_LOADING_STATE = document.getElementById("form-loading");
 const SPECIFICATION_ACTIONS = document.getElementById("specification-actions");
+const SPECIFICATION_CANCEL_BUTTON = document.getElementById("specification-cancel-button");
 
 // Store Specification Id globally
 let rootSpecificationId;
@@ -107,7 +108,7 @@ function renderError(message, error = null) {
     `;
 
     // Redirect to configured cancel location
-    setTimeout(function () {
+    setTimeout(() => {
         window.location.href = currentConfig.redirectOnCancel;
     }, 2000);
 }
@@ -201,7 +202,7 @@ async function renderNewSpecification(specification, showSpecificationNameInTitl
         setTabTitleSpecificationName(specification);
     }
 
-    // Get any custom assets for this Project
+    // [OPTIONAL] Load custom assets for this Project
     loadCustomProjectAssets(QUERY_PROJECT_NAME);
 }
 
@@ -261,7 +262,7 @@ async function renderExistingSpecification() {
         // [OPTIONAL] Show Specification Name in browser tab title
         setTabTitleSpecificationName(specification);
 
-        // [OPTIONAL] Load matching custom assets for this Project name
+        // [OPTIONAL] Load custom assets for this Project
         loadCustomProjectAssets();
     } catch (error) {
         renderError(existingError, error);
@@ -296,7 +297,7 @@ function pingSpecification(specification) {
 }
 
 /**
- * Load additional Project assets (JS/CSS).
+ * Load additional Project assets.
  *
  * Enables custom scripts or styles to be loaded per Project.
  * These can be used to expand functionality, or create advanced Control styles.
@@ -304,6 +305,15 @@ function pingSpecification(specification) {
  * @param {string} project - The name of the Project to load matching assets.
  */
 async function loadCustomProjectAssets(project) {
+    if (config.run.loadCustomProjectAssets === undefined) {
+        return;
+    }
+
+    if (config.run.loadCustomProjectAssets.scripts === false
+        && config.run.loadCustomProjectAssets.styles === false) {
+        return;
+    }
+
     const customAssetsFolder = "custom-project-assets";
     let projectName;
 
@@ -323,10 +333,17 @@ async function loadCustomProjectAssets(project) {
 
     // Load custom assets
     const assetPath = `${customAssetsFolder}/${cleanProjectName}`;
-    await Promise.allSettled([
-        loadCustomStyles(assetPath),
-        loadCustomScripts(assetPath)
-    ]);
+    const assetPromises = [];
+
+    if (config.run.loadCustomProjectAssets.scripts) {
+        assetPromises.push(loadCustomScripts(assetPath));
+    }
+
+    if (config.run.loadCustomProjectAssets.styles) {
+        assetPromises.push(loadCustomStyles(assetPath));
+    }
+
+    await Promise.allSettled(assetPromises);
 }
 
 /**
@@ -426,7 +443,7 @@ async function cancelSpecification() {
 function registerFormButtons(specification) {
 
     // Cancel button
-    document.getElementById("specification-cancel-button").onclick = () => {
+    SPECIFICATION_CANCEL_BUTTON.onclick = () => {
         if (config.run.showWarningOnExit) {
             showConfirmationDialog(cancelSpecification);
             return;
@@ -638,6 +655,12 @@ function formUpdated(event) {
     // Update navigation state
     if (typeof data.showStandardNavigation === "boolean") {
         setNavigationState(data.showStandardNavigation);
+    }
+
+    // Hide Specification Action buttons if active Form is a dialog
+    if (typeof data.isDialog === "boolean") {
+        SPECIFICATION_ACTIONS.hidden = data.isDialog;
+        SPECIFICATION_CANCEL_BUTTON.hidden = data.isDialog;
     }
 }
 
