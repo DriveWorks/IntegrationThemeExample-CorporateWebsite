@@ -6,7 +6,6 @@
 label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.5em;
 }
 
 input[type="text"],
@@ -22,32 +21,34 @@ input[type="password"] {
   background-color: #fff;
   -webkit-appearance: none;
 }
+
 input:focus {
   outline: none;
   border-color: var(--color-neutral);
 }
 
 button {
-  text-align: center;
-  padding: 1em 2em;
+  padding: 1rem 1.25rem;
   border-radius: 100em;
   border: none;
   background-color: var(--color-neutral);
   color: #fff;
-  cursor: pointer;
+  text-align: center;
   font-weight: 600;
+  cursor: pointer;
   transition:
     background-color .3s ease,
     filter .3s ease;
 }
+
 button:hover {
   filter: brightness(110%);
 }
+
 button:disabled {
   opacity: .25;
   pointer-events: none;
 }
-
 
 /* Form */
 .login-container {
@@ -62,7 +63,7 @@ button:disabled {
   flex-wrap: wrap;
   flex-direction: column;
   width: 100%;
-  padding: 3em 2em 2em;
+  padding: 2.5em 2em 1.5em;
   text-align: center;
   background-color: #fff;
   box-shadow: var(--shadow-light);
@@ -72,7 +73,7 @@ button:disabled {
   text-align: left;
   width: 100%;
   max-width: 25em;
-  margin: 0 auto 2em;
+  margin: 1em auto 2em;
 }
 
 .login-cover {
@@ -84,18 +85,21 @@ button:disabled {
 
 .login-notice {
   display: none;
-  padding: .75em 1em;
-  margin: -1em auto 2em;
+  padding: .5em .75em;
+  margin: 0 auto;
   background-color: var(--color-neutral);
   color: #fff;
   border-radius: var(--global-radius);
 }
+
 .login-notice.is-shown {
   display: inline-block;
 }
+
 .login-notice.error {
   background-color: var(--color-error);
 }
+
 .login-notice.success {
   background-color: var(--color-success);
 }
@@ -103,6 +107,7 @@ button:disabled {
 .login-logo {
   margin-bottom: 2em;
 }
+
 .login-logo img {
   width: 100%;
   height: auto;
@@ -114,15 +119,17 @@ button:disabled {
   font-weight: 800;
   margin-bottom: .5em;
 }
+
 .login-information {
   opacity: .9;
   font-size: 1.2em;
-  margin: 0 0 1.5em;
+  margin: 0 0 1rem;
 }
 
 .login-form label {
-  margin-bottom: .75em;
+  margin-bottom: .25em;
 }
+
 .login-form input {
   font-size: 1.2em;
   padding: .75em;
@@ -130,10 +137,13 @@ button:disabled {
 
 .password-input {
   position: relative;
+  margin-bottom: 1em;
 }
+
 .password-input input {
   position: relative;
   padding-right: 5.5em;
+  margin: 0;
 }
 
 .password-toggle {
@@ -149,13 +159,14 @@ button:disabled {
   color: var(--color-neutral);
   font-weight: 600;
   padding: .5em 1em;
-  margin-bottom: .25em;
   border-radius: .5em;
   transition: color .2s ease;
 }
+
 .password-toggle:hover {
   color: #333;
 }
+
 .password-toggle svg {
   font-size: 1.25em;
   margin-right: .25em;
@@ -164,12 +175,13 @@ button:disabled {
 .login-button {
   position: relative;
   width: 100%;
-  font-size: 1.25em;
-  margin: .5em 0 0;
+  font-size: 1.125rem;
 }
+
 .login-button:focus {
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
 }
+
 .login-button svg {
   display: none;
   font-size: 1.5em;
@@ -182,13 +194,31 @@ button:disabled {
   color: #fff;
   animation: spin .75s linear infinite;
 }
+
 .login-button.is-loading {
   opacity: 0.5;
   pointer-events: none;
   color: transparent;
 }
+
 .login-button.is-loading svg {
   display: block;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.25rem 0;
+    font-size: .875rem;
+    color: rgba(0,0,0,.5);
+}
+
+.login-divider:before,
+.login-divider:after {
+    content: '';
+    flex: 1;
+    border: 1px solid rgba(0,0,0,.05);
 }
 
 .login-copyright {
@@ -197,25 +227,24 @@ button:disabled {
   color: #888;
 }
 
-
-/* Screen: Tablet-up */
+/* Screen: Medium screens */
 @media screen and (min-width: 40em) {
 
   .login-form {
-    padding-top: 6em;
+    padding-top: 5em;
   }
 
 }
 
-
-/* Screen: Laptop-up */
+/* Screen: Large screens */
 @media screen and (min-width: 60em) {
 
   .login-form {
     width: 35%;
     min-width: 30em;
-    padding: 6em 4em 3em;
+    padding: 4em 4em 2em;
   }
+
   .login-cover {
     width: 65%;
   }
@@ -223,15 +252,13 @@ button:disabled {
   .login-logo {
     margin-bottom: 3em;
   }
+
   .login-title {
     font-size: 2em;
   }
-  .login-information {
-    margin: 0 0 3em;
-  }
 
-  .login-form input {
-    margin-bottom: 1.25em;
+  .login-notice {
+    margin: .5em auto;
   }
 
 }

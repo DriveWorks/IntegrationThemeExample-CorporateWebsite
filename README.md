@@ -1,5 +1,5 @@
 # DriveWorks Live - Integration Theme Example - Corporate Website
-### Release: 21.0
+### Release: 21.1
 #### Minimum DriveWorks Version: 18.1
 
 An example of a full Corporate Website built upon the DriveWorks Live Integration Theme API.
@@ -32,12 +32,14 @@ Join our [online community](https://my.driveworks.co.uk) for discussion, resourc
     - Tab title shows name of running Specification.
     - Optional warning before navigating from page (where supported).
         - Set `config.run.showWarningOnExit` to `true` to enable.
-    - Load custom assets (JavaScript/CSS) matching the current Project name.
+    - Load custom scripts (`.js`) or styles (`.css`) with file name matching the current Project name.
         - Implement advanced customizations using JavaScript and CSS.
         - See `/custom-project-assets` for examples.
+        - See `config.run.loadCustomProjectAssets` and set `scripts` or `styles` to `true` to enable.
 - 'Details' view.
     - View Specification details.
     - Access documents and view images in a basic carousel.
+    - Set `config.details.showStartNewSpecificationAction` to `true` to enable an action to start a new Specification.
 - 'History' view.
     - Search and filter Specifications.
     - Change ordering using OData.
