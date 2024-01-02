@@ -48,8 +48,9 @@ Join our [online community](https://my.driveworks.co.uk) for discussion, resourc
     - Similar to the [DriveWorks Live "Integration Module"](https://docs.driveworkspro.com/topic/IntegrationModuleLive).
     - Examples:
         - /query?run={ProjectName}
-        - /query?specification={SpecificationName}
-        - /query?specification={SpecificationName}&transition={TransitionName}
+        - /query?specification={SpecificationId}
+        - /query?specification={SpecificationId}&transition={TransitionName}
+        - /query?specification={SpecificationId}&operation={OperationName}
 
 ### To use:
 1. Clone this repository, or download as a `.zip` file.
