@@ -42,12 +42,12 @@ button:disabled,
 /* Header */
 .page-title {
   backdrop-filter: blur(4px);
-  margin-top: .1em;
+  margin-top: .25em;
 }
 
 .page-title .inner {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   max-width: var(--row-width);
   margin: 0 auto;
@@ -55,33 +55,36 @@ button:disabled,
 }
 
 .page-title h1 {
-  flex: 1;
+  order: 1;
+  width: 100%;
   min-width: 0;
-  margin: 0;
-  font-size: 1.25em;
+  margin: 1rem 0 0;
+  font-size: 1.5em;
   line-height: 1.2;
   word-wrap: break-word;
   transition: opacity .3s ease;
 }
 
-.back-button {
+.page-title .button {
   align-items: center;
   background-color: rgba(0,0,0,.05);
   color: #000;
-  padding: .75em;
+  padding: .5em .75em;
   margin-right: 1em;
   text-decoration: none;
 }
-.back-button:hover {
+.page-title .button:last-child {
+  margin-left: auto;
+  margin-right: 0;
+}
+.page-title .button:hover {
   background-color: rgba(0,0,0,.15);
 }
-.back-button span {
-  font-size: 0;
-}
-.back-button svg {
+.page-title .button svg {
   width: 1em;
   height: 1em;
   min-width: 1em;
+  margin-right: .5em;
 }
 
 /* Actions (Transition/Operations) */
@@ -444,24 +447,24 @@ button.action-transition {
 @media screen and (min-width: 40em) {
 
   .page-title .inner {
+    flex-wrap: nowrap;
     padding: 1.5em 1.5em 1em;
   }
   .page-title h1 {
+    order: 0;
+    margin: 0;
     font-size: 1.75em;
   }
 
-  .back-button {
-    padding: 1em 1.25em;
+  .page-title .button {
+    padding: .75em 1.25em .75em 1em;
   }
-  .back-button span {
-    font-size: inherit;
-  }
-  .back-button svg {
-    margin-right: .75em;
+  .page-title .button:last-child {
+    margin-left: 1em;
   }
 
   .page-actions button {
-    padding: 1em 2em;
+    padding: .75em 1.5em;
     margin: 0 1em 1em 0;
   }
 

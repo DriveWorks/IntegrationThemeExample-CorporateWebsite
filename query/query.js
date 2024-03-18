@@ -464,13 +464,12 @@ class QueryManager {
  */
 async function handleLogout() {
     try {
-        // Log out any existing Sessions
         await client.logoutAllGroups();
-
-        redirectToLogin("You have been logged out.", "success");
     } catch (error) {
         debug(error, true);
     }
+
+    redirectToLogin("You have been logged out.", "success");
 }
 
 /**

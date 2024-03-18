@@ -3,7 +3,7 @@
  */
 
 // Get config
-const SPECIFICATION_PING_INTERVAL = config.specificationPingInterval;
+const SPECIFICATION_PING_INTERVAL = typeof config.specificationPingInterval === "number" ? config.specificationPingInterval : 0;
 
 // Get URL query values
 const URL_QUERY = new URLSearchParams(window.location.search);
@@ -39,10 +39,12 @@ for (const [key, value] of URL_QUERY) {
 const CONTENT_NAVIGATION = document.getElementById("content-navigation");
 const FORM_CONTAINER = document.getElementById("form-container");
 const FORM_LOADING_STATE = document.getElementById("form-loading");
-const SPECIFICATION_ACTIONS = document.getElementById("spec-actions");
+const SPECIFICATION_ACTIONS = document.getElementById("specification-actions");
+const SPECIFICATION_CANCEL_BUTTON = document.getElementById("specification-cancel-button");
 
 // Store Specification Id globally
-let specificationId;
+let rootSpecificationId;
+let activeSpecificationId;
 
 // Detect current config type based on query values
 let currentConfig = config.project;
@@ -88,7 +90,7 @@ function startPageFunctions() {
 
 /**
  * Display error when rendering. Redirect after short delay.
- * 
+ *
  * @param {string} message - The message display on the login screen.
  * @param {Object} [error] - The error thrown.
  */
@@ -106,9 +108,9 @@ function renderError(message, error = null) {
     `;
 
     // Redirect to configured cancel location
-    setTimeout(function () {
+    setTimeout(() => {
         window.location.href = currentConfig.redirectOnCancel;
-    }, 1000);
+    }, 2000);
 }
 
 /**
@@ -119,13 +121,12 @@ async function createSpecification() {
     setTabTitle(QUERY_PROJECT_NAME);
 
     try {
-
         // Create new Specification
         const specification = await client.createSpecification(GROUP_ALIAS, QUERY_PROJECT_NAME);
+
         if (!specification.id) {
             renderError(createError);
         }
-        specificationId = specification.id;
 
         // Render
         renderNewSpecification(specification);
@@ -142,13 +143,12 @@ async function createDriveAppSpecification() {
     setTabTitle(QUERY_DRIVE_APP_ALIAS);
 
     try {
-
         // Create new DriveApp Specification
         const driveAppSpecification = await client.runDriveApp(GROUP_ALIAS, QUERY_DRIVE_APP_ALIAS);
+
         if (!driveAppSpecification.id) {
             renderError(createError);
         }
-        specificationId = driveAppSpecification.id;
 
         // Render
         renderNewSpecification(driveAppSpecification, false);
@@ -159,34 +159,38 @@ async function createDriveAppSpecification() {
 
 /**
  * Render new Specification to container.
- * 
+ *
  * @param {Object} specification - DriveWorks Specification object.
  */
 async function renderNewSpecification(specification, showSpecificationNameInTitle = true) {
+    rootSpecificationId = specification.id;
+    activeSpecificationId = rootSpecificationId;
 
     // Process Specification parameters from query (if supplied)
     await processSpecificationQueryParameters();
 
     // Render Form markup
     await specification.render(FORM_CONTAINER);
-    const formElement = specification.specificationFormElement;
-
-    // [OPTIONAL] Show warning dialog when exiting page after Form renders
-    attachPageUnloadDialog();
-
-    // Set the default navigation state (open or closed)
-    setNavigationState();
-
-    // Get any custom assets for this Project
-    loadCustomProjectAssets(QUERY_PROJECT_NAME);
 
     // Clear loading state (with delay to hide re-layout)
     removeLoadingState();
 
-    attachSpecificationEvents(formElement);
+    // [OPTIONAL] Show warning dialog when exiting page after Form renders
+    attachPageUnloadDialog();
+
+    // Register external Form navigation buttons
     registerFormButtons(specification);
 
-    // Listen for cancel & close/complete event
+    // Set the default navigation state (open or closed)
+    setNavigationState();
+
+    // Get Actions
+    renderSpecificationActions();
+
+    // Register Specification events
+    const formElement = specification.specificationFormElement;
+    attachSpecificationEvents(formElement);
+
     specification.registerSpecificationClosedDelegate(() => formClosed());
     specification.registerSpecificationCancelledDelegate(() => formCancelled());
 
@@ -197,6 +201,9 @@ async function renderNewSpecification(specification, showSpecificationNameInTitl
     if (showSpecificationNameInTitle) {
         setTabTitleSpecificationName(specification);
     }
+
+    // [OPTIONAL] Load custom assets for this Project
+    loadCustomProjectAssets(QUERY_PROJECT_NAME);
 }
 
 /**
@@ -207,21 +214,28 @@ async function renderExistingSpecification() {
     setTabTitle(QUERY_SPECIFICATION_ID);
 
     try {
+        // Validate Specification Id provided can be rendered.
+        const specificationToValidate = await client.getSpecificationById(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
+
+        if (specificationToValidate.stateType !== 0) {
+            renderError("Specification is not running.");
+            return;
+        }
 
         // Get existing Specification
         const specification = await client.createSpecificationById(GROUP_ALIAS, QUERY_SPECIFICATION_ID);
-        if (!specification.id) {
-            renderError(existingError);
-            return;
-        }
-        specificationId = specification.id;
+
+        rootSpecificationId = specification.id;
+        activeSpecificationId = rootSpecificationId;
 
         // Process Specification parameters from query (if supplied)
         await processSpecificationQueryParameters();
 
         // Render Form markup
         await specification.render(FORM_CONTAINER);
-        const formElement = specification.specificationFormElement;
+
+        // Clear loading state (with delay to hide re-layout)
+        removeLoadingState();
 
         // [OPTIONAL] Show warning dialog when exiting page after Form renders
         attachPageUnloadDialog();
@@ -229,15 +243,16 @@ async function renderExistingSpecification() {
         // Set the default navigation state (open or closed)
         setNavigationState();
 
-        // [OPTIONAL] Load matching custom assets for this Project name
-        loadCustomProjectAssets();
-
-        // Clear loading state (with delay to hide re-layout)
-        removeLoadingState();
-
-        // Register buttons & events
-        attachSpecificationEvents(formElement);
+        // Register external Form navigation buttons
         registerFormButtons(specification);
+
+        // Get Actions
+        renderSpecificationActions();
+
+        // Register events
+        const formElement = specification.specificationFormElement;
+        attachSpecificationEvents(formElement);
+
         specification.registerSpecificationClosedDelegate(() => existingSpecificationClosed());
         specification.registerSpecificationCancelledDelegate(() => existingSpecificationCancelled());
 
@@ -246,6 +261,9 @@ async function renderExistingSpecification() {
 
         // [OPTIONAL] Show Specification Name in browser tab title
         setTabTitleSpecificationName(specification);
+
+        // [OPTIONAL] Load custom assets for this Project
+        loadCustomProjectAssets();
     } catch (error) {
         renderError(existingError, error);
     }
@@ -279,14 +297,23 @@ function pingSpecification(specification) {
 }
 
 /**
- * Load additional Project assets (JS/CSS).
- * 
+ * Load additional Project assets.
+ *
  * Enables custom scripts or styles to be loaded per Project.
  * These can be used to expand functionality, or create advanced Control styles.
- * 
+ *
  * @param {string} project - The name of the Project to load matching assets.
  */
 async function loadCustomProjectAssets(project) {
+    if (config.run.loadCustomProjectAssets === undefined) {
+        return;
+    }
+
+    if (config.run.loadCustomProjectAssets.scripts === false
+        && config.run.loadCustomProjectAssets.styles === false) {
+        return;
+    }
+
     const customAssetsFolder = "custom-project-assets";
     let projectName;
 
@@ -294,7 +321,7 @@ async function loadCustomProjectAssets(project) {
     if (project) {
         projectName = project;
     } else {
-        const specification = await client.getSpecificationById(GROUP_ALIAS, specificationId);
+        const specification = await client.getSpecificationById(GROUP_ALIAS, rootSpecificationId);
         projectName = specification.originalProjectName;
     }
 
@@ -306,15 +333,22 @@ async function loadCustomProjectAssets(project) {
 
     // Load custom assets
     const assetPath = `${customAssetsFolder}/${cleanProjectName}`;
-    await Promise.allSettled([
-        loadCustomStyles(assetPath),
-        loadCustomScripts(assetPath)
-    ]);
+    const assetPromises = [];
+
+    if (config.run.loadCustomProjectAssets.scripts) {
+        assetPromises.push(loadCustomScripts(assetPath));
+    }
+
+    if (config.run.loadCustomProjectAssets.styles) {
+        assetPromises.push(loadCustomStyles(assetPath));
+    }
+
+    await Promise.allSettled(assetPromises);
 }
 
 /**
  * Append additional script file.
- * 
+ *
  * @param {string} path - The path of the custom script.
  */
 async function loadCustomScripts(path) {
@@ -331,7 +365,7 @@ async function loadCustomScripts(path) {
 
 /**
  * Append additional stylesheet.
- * 
+ *
  * @param {string} path - The path of the custom stylesheet.
  */
 async function loadCustomStyles(path) {
@@ -350,14 +384,14 @@ async function loadCustomStyles(path) {
 
 /**
  * Detect external navigation (sidebar) display changes.
- * 
+ *
  * @param {boolean} [showNavigation] - Set navigation to be open (true) or closed (false).
  */
 async function setNavigationState(showNavigation = null) {
 
     // If no state provided, query from server
     if (showNavigation == null) {
-        const formData = await client.getSpecificationFormData(GROUP_ALIAS, specificationId);
+        const formData = await client.getSpecificationFormData(GROUP_ALIAS, rootSpecificationId);
         showNavigation = formData.form.showStandardNavigation;
     }
 
@@ -367,20 +401,40 @@ async function setNavigationState(showNavigation = null) {
 
 /**
  * Listen for Form events.
- * 
+ *
  * @param {Object} formElement - Specification Form element.
  */
 function attachSpecificationEvents(formElement) {
-    formElement.addEventListener("FormUpdated", event => formUpdated(event));
-    formElement.addEventListener("ActionsUpdated", event => renderSpecificationActions(event));
+    formElement.addEventListener("FormUpdated", event => {
+        formUpdated(event);
+    });
+
+    formElement.addEventListener("ActionsUpdated", async () => {
+        disableSpecificationActions();
+
+        // Ensure we have the latest Specification Id
+        const formData = await client.getSpecificationFormData(GROUP_ALIAS, rootSpecificationId);
+        activeSpecificationId = formData.form.specificationId;
+
+        renderSpecificationActions();
+    });
 }
 
 /**
  * Cancel Specification.
  */
 async function cancelSpecification() {
-    detachPageUnloadDialog();
-    await client.cancelSpecification(GROUP_ALIAS, specificationId);
+    if (activeSpecificationId === rootSpecificationId) {
+
+        // Cancel root Specification - with redirect.
+        detachPageUnloadDialog();
+
+        await client.cancelSpecification(GROUP_ALIAS, rootSpecificationId);
+    } else {
+
+        // Cancel active child Specification - no redirect.
+        await client.cancelSpecification(GROUP_ALIAS, activeSpecificationId);
+    }
 }
 
 /**
@@ -389,7 +443,7 @@ async function cancelSpecification() {
 function registerFormButtons(specification) {
 
     // Cancel button
-    document.getElementById("specification-cancel-button").onclick = () => {
+    SPECIFICATION_CANCEL_BUTTON.onclick = () => {
         if (config.run.showWarningOnExit) {
             showConfirmationDialog(cancelSpecification);
             return;
@@ -406,17 +460,17 @@ function registerFormButtons(specification) {
 }
 
 /**
- * Render Form Actions - Operations/Transitions.
+ * Render Specification Actions (Operations & Transitions).
  */
 async function renderSpecificationActions() {
 
-    // Get all actions
-    const actions = await client.getSpecificationActions(GROUP_ALIAS, specificationId);
+    // Get all Actions
+    const actions = await client.getSpecificationActions(GROUP_ALIAS, activeSpecificationId);
 
-    // Output actions if: not stored (first run), objects don't match
+    // Output Actions if: not stored (first run), objects don't match
     if (!isEmpty(actions)) {
 
-        // Clear out old actions
+        // Clear out old Actions
         SPECIFICATION_ACTIONS.innerHTML = "";
 
         for (let actionIndex = 0; actionIndex < actions.length; actionIndex++) {
@@ -443,8 +497,19 @@ async function renderSpecificationActions() {
 }
 
 /**
+ * Disable Specification Actions (Operations & Transitions).
+ */
+async function disableSpecificationActions() {
+    const actions = SPECIFICATION_ACTIONS.querySelectorAll("button");
+
+    for (const action of actions) {
+        action.disabled = true;
+    }
+}
+
+/**
  * Render Operation.
- * 
+ *
  * @param {string} name - The name of the Operation.
  * @param {Object} button - The button to attach click events.
  */
@@ -454,7 +519,10 @@ function renderOperationAction(name, button) {
     button.classList.add("action-operation");
 
     // Attach click
-    button.onclick = () => invokeOperation(name);
+    button.onclick = () => {
+        if (button.disabled) return;
+        invokeOperation(name);
+    };
 
     // Output button
     SPECIFICATION_ACTIONS.appendChild(button);
@@ -462,7 +530,7 @@ function renderOperationAction(name, button) {
 
 /**
  * Render Transition.
- * 
+ *
  * @param {string} name - The name of the Transition.
  * @param {Object} button - The button to attach click events.
  */
@@ -472,7 +540,10 @@ function renderTransitionAction(name, button) {
     button.classList.add("action-transition");
 
     // Attach click
-    button.onclick = () => invokeTransition(name);
+    button.onclick = () => {
+        if (button.disabled) return;
+        invokeTransition(name);
+    };
 
     // Output button
     SPECIFICATION_ACTIONS.appendChild(button);
@@ -503,8 +574,8 @@ async function driveConstant(constant) {
     const constantValue = constant.value;
 
     try {
-        await client.getSpecificationConstantByName(GROUP_ALIAS, specificationId, constantName);
-        await client.updateConstantValue(GROUP_ALIAS, specificationId, constantName, constantValue);
+        await client.getSpecificationConstantByName(GROUP_ALIAS, activeSpecificationId, constantName);
+        await client.updateConstantValue(GROUP_ALIAS, activeSpecificationId, constantName, constantValue);
     } catch (error) {
         console.log(error);
         console.log(`Unable to set the value of Constant '${constantName}' to '${constantValue}'.`);
@@ -520,7 +591,7 @@ async function runMacro(macro) {
     const macroArgument = macro.argument;
 
     try {
-        await client.runMacro(GROUP_ALIAS, specificationId, {
+        await client.runMacro(GROUP_ALIAS, activeSpecificationId, {
             macroName: macroName,
             macroArgument: macroArgument
         });
@@ -532,13 +603,13 @@ async function runMacro(macro) {
 
 /**
  * Invoke Operation.
- * 
+ *
  * @param {string} operationName - The name of the Operation to invoke.
  */
 async function invokeOperation(operationName) {
     try {
-        await client.getSpecificationOperationByName(GROUP_ALIAS, specificationId, operationName);
-        await client.invokeOperation(GROUP_ALIAS, specificationId, operationName);
+        await client.getSpecificationOperationByName(GROUP_ALIAS, activeSpecificationId, operationName);
+        await client.invokeOperation(GROUP_ALIAS, activeSpecificationId, operationName);
     } catch (error) {
         handleGenericError(error);
     }
@@ -546,16 +617,23 @@ async function invokeOperation(operationName) {
 
 /**
  * Invoke Transition.
- * 
+ *
  * @param {string} transitionName - The name of the Transition to invoke.
  */
 async function invokeTransition(transitionName) {
-    try {
-        await client.getSpecificationTransitionByName(GROUP_ALIAS, specificationId, transitionName);
-        await client.invokeTransition(GROUP_ALIAS, specificationId, transitionName);
 
-        detachPageUnloadDialog();
-        window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
+    // Redirect only if root Specification is actively displayed, not a child Specification.
+    const redirectAfterTransition = activeSpecificationId === rootSpecificationId;
+
+    try {
+        await client.getSpecificationTransitionByName(GROUP_ALIAS, activeSpecificationId, transitionName);
+        await client.invokeTransition(GROUP_ALIAS, activeSpecificationId, transitionName);
+
+        if (redirectAfterTransition) {
+            detachPageUnloadDialog();
+
+            window.location.href = `${currentConfig.redirectOnClose}?specification=${rootSpecificationId}`;
+        }
     } catch (error) {
         handleGenericError(error);
     }
@@ -563,14 +641,27 @@ async function invokeTransition(transitionName) {
 
 /**
  * Triggers on Form update.
- * 
+ *
  * @param {Object} event - FormUpdated event object.
  */
 function formUpdated(event) {
+    const data = event.detail.specData;
 
-    // Update navigation state (may have changed)
-    const navState = event.detail.specData.showStandardNavigation;
-    setNavigationState(navState);
+    // Update active Specification Id
+    if (data.specificationId) {
+        activeSpecificationId = data.specificationId;
+    }
+
+    // Update navigation state
+    if (typeof data.showStandardNavigation === "boolean") {
+        setNavigationState(data.showStandardNavigation);
+    }
+
+    // Hide Specification Action buttons if active Form is a dialog
+    if (typeof data.isDialog === "boolean") {
+        SPECIFICATION_ACTIONS.hidden = data.isDialog;
+        SPECIFICATION_CANCEL_BUTTON.hidden = data.isDialog;
+    }
 }
 
 /**
@@ -578,7 +669,8 @@ function formUpdated(event) {
  */
 function formClosed() {
     detachPageUnloadDialog();
-    window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
+
+    window.location.href = `${currentConfig.redirectOnClose}?specification=${rootSpecificationId}`;
 }
 
 /**
@@ -586,6 +678,7 @@ function formClosed() {
  */
 function formCancelled() {
     detachPageUnloadDialog();
+
     window.location.href = currentConfig.redirectOnCancel;
 }
 
@@ -594,14 +687,15 @@ function formCancelled() {
  */
 function existingSpecificationClosed() {
     detachPageUnloadDialog();
-    window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
+
+    window.location.href = `${currentConfig.redirectOnClose}?specification=${rootSpecificationId}`;
 }
 
 /**
  * Existing Specification cancelled.
  */
 function existingSpecificationCancelled() {
-    window.location.href = `${currentConfig.redirectOnClose}?specification=${specificationId}`;
+    window.location.href = `${currentConfig.redirectOnClose}?specification=${rootSpecificationId}`;
 }
 
 /**
@@ -610,10 +704,10 @@ function existingSpecificationCancelled() {
 function removeLoadingState() {
 
     // Delay to mask initial Form re-layout
-    setTimeout(function () {
+    setTimeout(() => {
         FORM_LOADING_STATE.style.opacity = "0";
 
-        setTimeout(function () {
+        setTimeout(() => {
             FORM_LOADING_STATE.remove();
         }, 350);
     }, 500);
@@ -645,13 +739,13 @@ function hideFormNavigation() {
  * Get Form data - for debugging.
  */
 async function getFormData() {
-    const formData = await client.getSpecificationFormData(GROUP_ALIAS, specificationId);
+    const formData = await client.getSpecificationFormData(GROUP_ALIAS, rootSpecificationId);
     console.log(formData);
 }
 
 /**
  * Check for existence of additional files.
- * 
+ *
  * @param {string} url - URL of file to confirm existence.
  */
 async function fileExists(url) {
@@ -684,7 +778,7 @@ function detachPageUnloadDialog() {
 
 /**
  * Handle beforeunload event.
- * 
+ *
  * @param {Object} event - The beforeunload event object.
  */
 function beforeUnloadHandler(event) {
@@ -694,7 +788,7 @@ function beforeUnloadHandler(event) {
 
 /**
  * Set browser tab title to Specification name
- * 
+ *
  * @param {Object} specification - DriveWorks Specification object
  */
 async function setTabTitleSpecificationName(specification) {
@@ -704,7 +798,7 @@ async function setTabTitleSpecificationName(specification) {
 
 /**
  * Set browser tab title
- * 
+ *
  * @param {Object} text - The text to display in the title.
  */
 function setTabTitle(text) {
@@ -731,7 +825,7 @@ function enableLogoutConfirmation() {
 
 /**
  * Show custom confirmation dialog.
- * 
+ *
  * @param {function} confirmAction - The function to trigger on confirmation.
  * @param {string} [message] - The message to display in the dialog.
  */
@@ -740,6 +834,7 @@ function showConfirmationDialog(confirmAction, message = "Are you sure?") {
         return;
     }
 
+    // Dialog
     const dialog = document.createElement("div");
     dialog.classList.add("custom-dialog");
 
@@ -747,6 +842,7 @@ function showConfirmationDialog(confirmAction, message = "Are you sure?") {
     const overlay = document.createElement("div");
     overlay.classList.add("dialog-overlay");
     overlay.onclick = () => dismissDialog();
+
     dialog.appendChild(overlay);
 
     // Message box
@@ -763,6 +859,7 @@ function showConfirmationDialog(confirmAction, message = "Are you sure?") {
         confirmAction();
         document.removeEventListener("keydown", dismissEscKey);
     };
+
     messageBox.appendChild(confirmButton);
 
     // Cancel button
@@ -770,11 +867,13 @@ function showConfirmationDialog(confirmAction, message = "Are you sure?") {
     cancelButton.innerHTML = "Cancel";
     cancelButton.classList.add("cancel-button");
     cancelButton.onclick = () => dismissDialog();
+
     messageBox.appendChild(cancelButton);
 
     // Show dialog (with animation)
     dialog.appendChild(messageBox);
     document.body.appendChild(dialog);
+
     setTimeout(() => {
         dialog.classList.add("open");
         confirmButton.focus();
@@ -784,7 +883,7 @@ function showConfirmationDialog(confirmAction, message = "Are you sure?") {
     const dismissDialog = () => {
         dialog.remove();
         document.removeEventListener("keydown", dismissEscKey);
-    }
+    };
 
     // Close with Esc key
     const dismissEscKey = (evt) => {
@@ -792,6 +891,7 @@ function showConfirmationDialog(confirmAction, message = "Are you sure?") {
         if (evt.key === "Escape") {
             dismissDialog();
         }
-    }
+    };
+
     document.addEventListener("keydown", dismissEscKey);
 }

@@ -19,6 +19,7 @@ body {
   height: 100vh;
   overflow: auto;
 }
+
 .has-navigation .content-inner {
   height: calc(100vh - 72px);
 }
@@ -39,32 +40,40 @@ body {
 }
 
 /* Form Actions (Sidebar Menu) */
-.action-group {
-  opacity: 0;
-  transition: opacity .3s ease;
-}
-.actions-shown .action-group {
-  opacity: 1;
-}
-
 .action-list button {
   max-width: 100%;
   padding: 1em 1.5em;
-  background: var(--color-neutral);
-  color: #fff;
   margin-bottom: 1em;
+  background-color: var(--color-blue);
+  color: #fff;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
 }
-.action-list button:hover {
+
+.action-list button[disabled] {
+  opacity: .25;
+  cursor: default;
+}
+
+.action-list button:not([disabled]):hover {
   filter: brightness(110%);
 }
 
-button.action-operation {
-  background: var(--color-warning);
+button.action-form {
+  background-color: var(--color-blue);
 }
+
+button.action-dialog {
+  background-color: var(--color-blue);
+}
+
+button.action-operation {
+  background-color: var(--color-orange);
+}
+
 button.action-transition {
-  background: var(--color-success);
+  background-color: var(--color-green);
 }
 
 /* Loading State */
@@ -90,6 +99,7 @@ button.action-transition {
   font-size: 2em;
   font-weight: 600;
 }
+
 .loading-state .loader {
   display: block;
   font-size: 1.5em;
@@ -139,6 +149,7 @@ button.action-transition {
   opacity: 0;
   overflow: hidden;
 }
+
 .custom-dialog .dialog-message p {
   font-size: 1.2em;
   margin: 0 0 .5em;
@@ -156,6 +167,7 @@ button.action-transition {
   cursor: pointer;
   transition: filter .2s ease;
 }
+
 .custom-dialog button:hover {
   filter: brightness(105%);
 }
@@ -169,6 +181,7 @@ button.action-transition {
 .custom-dialog.open .dialog-overlay {
   opacity: 1;
 }
+
 .custom-dialog.open .dialog-message {
   animation: fade-up .25s ease forwards;
 }
@@ -177,12 +190,14 @@ button.action-transition {
 .custom-dialog.is-loading {
   pointer-events: none;
 }
+
 .custom-dialog.is-loading .dialog-message::before,
 .custom-dialog.is-loading .dialog-message::after {
   content: '';
   position: absolute;
   z-index: 1;
 }
+
 .custom-dialog.is-loading .dialog-message::before {
   top: 0;
   left: 0;
@@ -190,6 +205,7 @@ button.action-transition {
   height: 100%;
   background: rgba(255, 255, 255, .9);
 }
+
 .custom-dialog.is-loading .dialog-message::after {
   top: 50%;
   left: 50%;
