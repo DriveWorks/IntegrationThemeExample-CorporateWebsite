@@ -173,8 +173,8 @@ async function renderDetails(specification) {
     if (!storedSpecification || !objectsEqual(specification, storedSpecification)) {
         const name = specification.name;
         const status = specification.stateName;
-        const created = specification.dateCreated;
-        const edited = specification.dateEdited;
+        const dateCreated = localizedDateTimeString(specification.dateCreated);
+        const dateEdited = localizedDateTimeString(specification.dateEdited);
 
         // Save Specification details to storage
         storedSpecification = specification;
@@ -186,8 +186,8 @@ async function renderDetails(specification) {
         // Generate details
         const markup = `
             ${status && `<div class="detail-item detail-status"><div>Status</div><div class="status-tag status-${normalizeString(status)}" title="${splitOnUpperCase(status)}">${splitOnUpperCase(status)}</div></div>`}
-            ${created && `<div class="detail-item detail-created"><div>Created</div><div>${new Date(created).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div></div>`}
-            ${edited && `<div class="detail-item detail-edited"><div>Modified</div><div>${new Date(edited).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div></div>`}
+            ${dateCreated && `<div class="detail-item detail-created"><div>Created</div><div>${dateCreated}</div></div>`}
+            ${dateEdited && `<div class="detail-item detail-edited"><div>Modified</div><div>${dateEdited}</div></div>`}
         `;
 
         const content = document.createElement("div");

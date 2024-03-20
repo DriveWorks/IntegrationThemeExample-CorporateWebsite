@@ -47,4 +47,15 @@ const config = {
         requireExactAlias: false,
     },
     loginReturnUrls: true, // Toggle appending return urls to restore the previous location when redirected to the login form 
+    locale: "en-US", // Set the default locale for displaying dates and numbers
+    dateFormat: {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric', 
+        hour12: true
+    },
+    // Whether to show debugging information in the console
+    debug: false,
 };
