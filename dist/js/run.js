@@ -407,6 +407,7 @@ async function setNavigationState(showNavigation = null) {
 function attachSpecificationEvents(formElement) {
     formElement.addEventListener("FormUpdated", event => {
         formUpdated(event);
+        renderSpecificationActions();
     });
 
     formElement.addEventListener("ActionsUpdated", async () => {
