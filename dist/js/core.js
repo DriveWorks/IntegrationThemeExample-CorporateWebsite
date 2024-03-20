@@ -338,3 +338,14 @@ function localizedDateTimeString(dateTime) {
     return formattedDate;
 }
 
+/**
+ * Send info the console if debug is enabled.
+ * @param {...any} args
+ * @return {void}
+ */
+function consoleDebug(...args) {
+    if (config.debug) {
+        console.debug(...args);
+    }
+}
+
