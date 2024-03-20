@@ -171,7 +171,7 @@ async function renderSpecifications(specifications, clearList = false) {
  */
 function generateHistoryItem(specification, index) {
     const status = specification.stateName;
-    const dateEdited = specification.dateEdited;
+    const dateEdited = localizedDateTimeString(specification.dateEdited);
 
     // Generate item
     const item = document.createElement("div");
@@ -191,7 +191,7 @@ function generateHistoryItem(specification, index) {
         <a href="details.html?specification=${specification.id}" class="item-details">
             <h3 class="item-name">${specification.name}</h3>
             ${status && `<div class="status"><div class="status-tag status-${normalizeString(status)}" title="${status}">${splitOnUpperCase(status)}</div></div>`}
-            ${dateEdited && `<div class="edit-date">${new Date(dateEdited).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</div>`}
+            ${dateEdited && `<div class="edit-date">${dateEdited}</div>`}
             <div><div class="view-action button">View</div></div>
         </a>
     `;
@@ -599,3 +599,4 @@ const headerObserver = new IntersectionObserver(
     { threshold: [1] }
 );
 headerObserver.observe(pageHeader);
+
