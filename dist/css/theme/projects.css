@@ -69,6 +69,7 @@
   background-position: center;
   padding-bottom: 100%;
   border-radius: .25em;
+  background-repeat: no-repeat;
 }
 
 .project-item .project-name {
