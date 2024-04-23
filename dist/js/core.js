@@ -6,6 +6,9 @@ const SERVER_URL = config.serverUrl;
 const GROUP_ALIAS = localStorage.getItem("sessionAlias");
 const CURRENT_SESSION = localStorage.getItem("sessionId");
 
+// Elements
+const passwordReset = document.getElementById("password-reset");
+
 let client;
 
 /**
@@ -19,6 +22,7 @@ let client;
     attachLogoutActions();
     detectTouchDevice();
     handleMobileNavigationToggle();
+    hidePasswordReset();
 })();
 
 /**
@@ -328,7 +332,7 @@ function localizedDateTimeString(dateTime) {
     if (!dateTime.includes("T")) {
         return dateTime
     }
-    
+
     // ensure the string is in universal time
     const UTCdateTime = ensureDateTimeUTC(dateTime);
 
@@ -346,6 +350,19 @@ function localizedDateTimeString(dateTime) {
 function consoleDebug(...args) {
     if (config.debug) {
         console.debug(...args);
+    }
+}
+
+/**
+ * hide the password reset link if the feature is disabled
+ * @return {void}
+ */
+function hidePasswordReset() {
+    if (!passwordReset) {
+        return;
+    }
+    if (!config.accountManagement.allowChangePassword) {
+        passwordReset.style.display = "none";
     }
 }
 

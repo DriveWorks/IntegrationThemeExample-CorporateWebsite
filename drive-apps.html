@@ -50,20 +50,34 @@
                 <ul>
                     <li>
                         <a href="projects.html">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#projects" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#projects" />
+                            </svg>
                             Projects
                         </a>
                     </li>
                     <li>
                         <a href="drive-apps.html" class="is-current">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#drive-apps" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#drive-apps" />
+                            </svg>
                             DriveApps
                         </a>
                     </li>
                     <li>
                         <a href="history.html">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#history" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#history" />
+                            </svg>
                             History
+                        </a>
+                    </li>
+                    <li>
+                        <a id="password-reset" href="query?DWConstantForm=PasswordReset">
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#reset" />
+                            </svg>
+                            Reset Password
                         </a>
                     </li>
                     <li class="logout-list">
@@ -77,7 +91,9 @@
             <div class="user-actions">
 
                 <div id="active-username" class="active-username">
-                    <svg class="icon"><use xlink:href="dist/icons.svg#user" /></svg>
+                    <svg class="icon">
+                        <use xlink:href="dist/icons.svg#user" />
+                    </svg>
                     <span class="username"></span>
                 </div>
 
@@ -98,10 +114,18 @@
                 </div>
 
                 <div id="drive-app-list" class="drive-app-list" style="opacity: 0;">
-                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
-                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
-                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
-                    <div class="drive-app-item skeleton-item"><div class="skeleton-block"></div></div>
+                    <div class="drive-app-item skeleton-item">
+                        <div class="skeleton-block"></div>
+                    </div>
+                    <div class="drive-app-item skeleton-item">
+                        <div class="skeleton-block"></div>
+                    </div>
+                    <div class="drive-app-item skeleton-item">
+                        <div class="skeleton-block"></div>
+                    </div>
+                    <div class="drive-app-item skeleton-item">
+                        <div class="skeleton-block"></div>
+                    </div>
                 </div>
 
             </div>
@@ -124,7 +148,7 @@
 
     <!-- Option B) Inject Client Library dynamically from server url in config file -->
     <script>
-        (function(doc, script) {
+        (function (doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
             script.onerror = () => dwClientLoadError();
@@ -134,4 +158,5 @@
     </script>
 
 </body>
+
 </html>

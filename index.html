@@ -54,16 +54,28 @@
                     <input type="password" id="login-password" autocomplete="current-password" value="" />
 
                     <button type="button" id="password-toggle" class="password-toggle">
-                        <svg class="icon"><use xlink:href="dist/icons.svg#eye-open" /></svg>
+                        <svg class="icon">
+                            <use xlink:href="dist/icons.svg#eye-open" />
+                        </svg>
                         Show
                     </button>
 
                 </div>
 
+                <a id="forgot-link" href="query?DWConstantForm=ForgotPassword">
+                    Forgot Password?
+                </a>
+
                 <button type="submit" id="login-button" class="login-button">
                     Login
-                    <svg class="icon"><use xlink:href="dist/icons.svg#loading" /></svg>
+                    <svg class="icon">
+                        <use xlink:href="dist/icons.svg#loading" />
+                    </svg>
                 </button>
+
+                <a id="create-link" href="query?DWConstantForm=CreateAccount">
+                    Create Account
+                </a>
 
                 <div id="login-divider">or</div>
 
@@ -90,7 +102,7 @@
 
     <!-- Option B) Inject Client Library dynamically from server url in config file -->
     <script>
-        (function(doc, script) {
+        (function (doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
             script.onload = () => dwClientLoaded(); // Custom local function run when client has loaded
@@ -99,4 +111,5 @@
     </script>
 
 </body>
+
 </html>

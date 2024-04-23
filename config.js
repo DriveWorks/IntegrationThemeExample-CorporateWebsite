@@ -63,4 +63,9 @@ const config = {
     // Whether to show debugging information in the console
     debug: false,
     allowSingleSignOn: false,
+    accountManagement: {
+        allowForgotPassword: false,
+        allowChangePassword: false,
+        allowCreateAccount: false,
+    },
 };

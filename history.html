@@ -49,20 +49,34 @@
                 <ul>
                     <li>
                         <a href="projects.html">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#projects" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#projects" />
+                            </svg>
                             Projects
                         </a>
                     </li>
                     <li>
                         <a href="drive-apps.html">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#drive-apps" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#drive-apps" />
+                            </svg>
                             DriveApps
                         </a>
                     </li>
                     <li>
                         <a href="history.html" class="is-current">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#history" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#history" />
+                            </svg>
                             History
+                        </a>
+                    </li>
+                    <li>
+                        <a id="password-reset" href="query?DWConstantForm=PasswordReset">
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#reset" />
+                            </svg>
+                            Reset Password
                         </a>
                     </li>
                     <li class="logout-list">
@@ -76,7 +90,9 @@
             <div class="user-actions">
 
                 <div id="active-username" class="active-username">
-                    <svg class="icon"><use xlink:href="dist/icons.svg#user" /></svg>
+                    <svg class="icon">
+                        <use xlink:href="dist/icons.svg#user" />
+                    </svg>
                     <span class="username"></span>
                 </div>
 
@@ -98,30 +114,46 @@
                 <div class="inner">
 
                     <div id="history-filter" class="history-filter-name">
-                        <svg class="search-icon icon"><use xlink:href="dist/icons.svg#search" /></svg>
+                        <svg class="search-icon icon">
+                            <use xlink:href="dist/icons.svg#search" />
+                        </svg>
                         <label for="name-filter-input" hidden>Filter by Name</label>
                         <input type="text" id="name-filter-input" placeholder="Filter by name..." />
-                        <svg class="loading-icon icon"><use xlink:href="dist/icons.svg#loading-alt" /></svg>
+                        <svg class="loading-icon icon">
+                            <use xlink:href="dist/icons.svg#loading-alt" />
+                        </svg>
                     </div>
 
                     <div class="history-actions">
 
                         <button id="date-order-toggle" class="date-toggle" title="Reverse Date Order">
-                            <svg class="icon calendar"><use xlink:href="dist/icons.svg#calendar" /></svg>
-                            <svg data-arrow class="icon arrow"><use xlink:href="dist/icons.svg#arrow-up" /></svg>
+                            <svg class="icon calendar">
+                                <use xlink:href="dist/icons.svg#calendar" />
+                            </svg>
+                            <svg data-arrow class="icon arrow">
+                                <use xlink:href="dist/icons.svg#arrow-up" />
+                            </svg>
                             Date (<span>Newest First</span>)
-                            <svg class="icon loading"><use xlink:href="dist/icons.svg#loading" /></svg>
+                            <svg class="icon loading">
+                                <use xlink:href="dist/icons.svg#loading" />
+                            </svg>
                         </button>
 
                         <button id="expand-toggle" class="expand-toggle" title="Toggle Expanded View">
-                            <span data-icon><svg class="icon"><use xlink:href="dist/icons.svg#expand" /></svg></span>
+                            <span data-icon><svg class="icon">
+                                    <use xlink:href="dist/icons.svg#expand" />
+                                </svg></span>
                             <span data-text>Expand</span>
                         </button>
 
                         <button id="filter-reset-button" class="reset-button">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#reset" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#reset" />
+                            </svg>
                             Reset
-                            <svg class="icon loading"><use xlink:href="dist/icons.svg#loading" /></svg>
+                            <svg class="icon loading">
+                                <use xlink:href="dist/icons.svg#loading" />
+                            </svg>
                         </button>
 
                     </div>
@@ -168,7 +200,7 @@
 
     <!-- Option B) Inject Client Library dynamically from server url in config file -->
     <script>
-        (function(doc, script) {
+        (function (doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
             script.onerror = () => dwClientLoadError();
@@ -178,4 +210,5 @@
     </script>
 
 </body>
+
 </html>

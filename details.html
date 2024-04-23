@@ -51,20 +51,34 @@
                 <ul>
                     <li>
                         <a href="projects.html">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#projects" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#projects" />
+                            </svg>
                             Projects
                         </a>
                     </li>
                     <li>
                         <a href="drive-apps.html">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#drive-apps" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#drive-apps" />
+                            </svg>
                             DriveApps
                         </a>
                     </li>
                     <li>
                         <a href="history.html" class="is-current">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#history" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#history" />
+                            </svg>
                             History
+                        </a>
+                    </li>
+                    <li>
+                        <a id="password-reset" href="query?DWConstantForm=PasswordReset">
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#reset" />
+                            </svg>
+                            Reset Password
                         </a>
                     </li>
                     <li class="logout-list">
@@ -78,7 +92,9 @@
             <div class="user-actions">
 
                 <div id="active-username" class="active-username">
-                    <svg class="icon"><use xlink:href="dist/icons.svg#user" /></svg>
+                    <svg class="icon">
+                        <use xlink:href="dist/icons.svg#user" />
+                    </svg>
                     <span class="username"></span>
                 </div>
 
@@ -97,7 +113,9 @@
                 <div id="detail-header" class="inner">
 
                     <a href="history.html" id="back-button" class="back-button button" title="Back to History">
-                        <svg class="icon"><use xlink:href="dist/icons.svg#arrow-left" /></svg>
+                        <svg class="icon">
+                            <use xlink:href="dist/icons.svg#arrow-left" />
+                        </svg>
                         <span>Back</span>
                     </a>
 
@@ -131,14 +149,20 @@
 
                     <div id="image-gallery" class="image-gallery">
 
-                        <button type="button" id="gallery-prev" class="gallery-arrow" title="Previous" style="display: none;" disabled>
-                            <svg class="icon"><use xlink:href="dist/icons.svg#arrow-left" /></svg>
+                        <button type="button" id="gallery-prev" class="gallery-arrow" title="Previous"
+                            style="display: none;" disabled>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#arrow-left" />
+                            </svg>
                         </button>
 
                         <div id="gallery-images" class="gallery-images"></div>
 
-                        <button type="button" id="gallery-next" class="gallery-arrow" title="Next" style="display: none;">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#arrow-right" /></svg>
+                        <button type="button" id="gallery-next" class="gallery-arrow" title="Next"
+                            style="display: none;">
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#arrow-right" />
+                            </svg>
                         </button>
 
                     </div>
@@ -153,7 +177,9 @@
                         <h3 class="section-heading">Documents (<span id="document-total-count">0</span>)</h3>
 
                         <div id="documents-generating" class="documents-generating" style="display: none;">
-                            <svg class="icon"><use xlink:href="dist/icons.svg#loading" /></svg>
+                            <svg class="icon">
+                                <use xlink:href="dist/icons.svg#loading" />
+                            </svg>
                             Generating...
                             <span id="generating-count"></span>
                         </div>
@@ -161,7 +187,8 @@
                     </div>
 
                     <div id="documents-help" class="documents-help">
-                        <p>DriveWorks automatically generates all of the documents required for this order. This can take a few minutes, so please stand by.</p>
+                        <p>DriveWorks automatically generates all of the documents required for this order. This can
+                            take a few minutes, so please stand by.</p>
                     </div>
 
                     <div id="documents-list"></div>
@@ -177,7 +204,8 @@
 
             <div id="lightbox-bg" class="lightbox-bg"></div>
 
-            <img id="lightbox-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" />
+            <img id="lightbox-image"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" />
 
             <button type="button" id="lightbox-close" title="Close">
                 <svg class="icon">
@@ -214,7 +242,7 @@
 
     <!-- Option B) Inject Client Library dynamically from server url in config file -->
     <script>
-        (function(doc, script) {
+        (function (doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
             script.onerror = () => dwClientLoadError();
@@ -224,4 +252,5 @@
     </script>
 
 </body>
+
 </html>

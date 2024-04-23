@@ -13,6 +13,8 @@ const loginButton = document.getElementById("login-button");
 const loginSSOButton = document.getElementById("login-sso-button");
 const loginDivider = document.getElementById("login-divider");
 const loginNotice = document.getElementById("login-notice");
+const forgotLink = document.getElementById("forgot-link");
+const createLink = document.getElementById("create-link");
 
 // Error Messages
 const genericErrorMessage = "There has been an issue.";
@@ -34,6 +36,18 @@ let client;
         } else {
             loginSSOButton.style.display = "none";
             loginDivider.style.display = "none";
+        }
+    }
+
+    if (forgotLink) {
+        if (!config.accountManagement.allowForgotPassword) {
+            forgotLink.style.display = "none";
+        }
+    }
+
+    if (createLink) {
+        if (!config.accountManagement.allowCreateAccount) {
+            createLink.style.display = "none";
         }
     }
 

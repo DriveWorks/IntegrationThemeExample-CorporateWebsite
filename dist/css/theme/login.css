@@ -179,7 +179,7 @@ button:disabled {
 }
 
 .login-button:focus {
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5);
 }
 
 .login-button svg {
@@ -206,19 +206,19 @@ button:disabled {
 }
 
 .login-divider {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin: 1.25rem 0;
-    font-size: .875rem;
-    color: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+  font-size: .875rem;
+  color: rgba(0, 0, 0, .5);
 }
 
 .login-divider:before,
 .login-divider:after {
-    content: '';
-    flex: 1;
-    border: 1px solid rgba(0,0,0,.05);
+  content: '';
+  flex: 1;
+  border: 1px solid rgba(0, 0, 0, .05);
 }
 
 .login-copyright {
@@ -261,4 +261,14 @@ button:disabled {
     margin: .5em auto;
   }
 
+}
+
+#forgot-link {
+  top: -.5em;
+  position: relative;
+}
+
+#create-link {
+  position: relative;
+  top: .5em;
 }
