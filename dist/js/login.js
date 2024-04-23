@@ -24,11 +24,15 @@ let client;
 /**
  * On page load.
  */
-(async function() {
+(async function () {
     loginForm.addEventListener("submit", handleLoginForm);
 
     if (loginSSOButton) {
-        loginSSOButton.addEventListener("click", handleLoginSSO);
+        if (config.allowSingleSignOn) {
+            loginSSOButton.addEventListener("click", handleLoginSSO);
+        } else {
+            loginSSOButton.style.display = "none";
+        }
     }
 
     showLoginNotice();
@@ -198,7 +202,7 @@ function loginError(noticeText, error = null) {
  * @param {string} [state] - The type of message state (error/success/info).
  */
 function setLoginNotice(text, state = "info") {
-    const notice = JSON.stringify({ text: text, state: state });
+    const notice = JSON.stringify({text: text, state: state});
     localStorage.setItem("loginNotice", notice);
 }
 
@@ -284,7 +288,7 @@ async function forceLogout() {
     // Logout from all Groups.
     try {
         await client.logoutAllGroups();
-    } catch(error) {
+    } catch (error) {
         handleGenericError(error);
     }
 

@@ -57,9 +57,10 @@ const config = {
         day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
-        minute: 'numeric', 
+        minute: 'numeric',
         hour12: true
     },
     // Whether to show debugging information in the console
     debug: false,
+    allowSingleSignOn: false,
 };
