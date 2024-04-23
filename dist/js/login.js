@@ -11,6 +11,7 @@ const URL_QUERY = new URLSearchParams(window.location.search);
 const loginForm = document.getElementById("login-form");
 const loginButton = document.getElementById("login-button");
 const loginSSOButton = document.getElementById("login-sso-button");
+const loginDivider = document.getElementById("login-divider");
 const loginNotice = document.getElementById("login-notice");
 
 // Error Messages
@@ -32,6 +33,7 @@ let client;
             loginSSOButton.addEventListener("click", handleLoginSSO);
         } else {
             loginSSOButton.style.display = "none";
+            loginDivider.style.display = "none";
         }
     }
 
