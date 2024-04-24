@@ -68,4 +68,11 @@ const config = {
         allowChangePassword: false,
         allowCreateAccount: false,
     },
+    logo: {
+        // login: "dist/img/logo-dark.svg",
+        login: "dist/img/tpm_logo_color.png",
+        // sidebar: "dist/img/logo-light.svg",
+        sidebar: "dist/img/tpm_logo_white.png",
+    },
+
 };

@@ -34,8 +34,8 @@
 
             <div class="logo-wrap">
 
-                <a href="projects.html" class="logo" title="Dashboard">
-                    <img src="dist/img/logo-light.svg" alt="DriveWorks" />
+                <a href="projects.html" class="logo">
+                    <img id="logo" />
                 </a>
 
                 <button id="nav-toggle" class="nav-toggle" title="Menu">
@@ -73,7 +73,9 @@
             <div class="user-actions">
 
                 <div id="active-username" class="active-username">
-                    <svg class="icon"><use xlink:href="dist/icons.svg#user" /></svg>
+                    <svg class="icon">
+                        <use xlink:href="dist/icons.svg#user" />
+                    </svg>
                     <span class="username"></span>
                 </div>
 
@@ -116,7 +118,7 @@
 
     <!-- Option B) Inject Client Library dynamically from server url in config file -->
     <script>
-        (function(doc, script) {
+        (function (doc, script) {
             script = doc.createElement("script");
             script.src = config.serverUrl + "/DriveWorksLiveIntegrationClient.min.js";
             script.onerror = () => dwClientLoadError();
@@ -126,4 +128,5 @@
     </script>
 
 </body>
+
 </html>

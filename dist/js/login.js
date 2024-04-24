@@ -28,6 +28,8 @@ let client;
  * On page load.
  */
 (async function () {
+    setLogo();
+
     loginForm.addEventListener("submit", handleLoginForm);
 
     if (loginSSOButton) {
@@ -50,7 +52,6 @@ let client;
             createLink.style.display = "none";
         }
     }
-
     showLoginNotice();
 })();
 
@@ -337,4 +338,15 @@ function localStorageSupported() {
  */
 function handleGenericError(error) {
     console.log(error);
+}
+
+/**
+ * Set the logo
+ */
+function setLogo() {
+    const logo = document.getElementById("logo");
+
+    if (logo && config.logo.login) {
+        logo.src = config.logo.login;
+    }
 }

@@ -17,7 +17,7 @@ let client;
 (() => {
     // Check if Session Id exists
     checkStoredSessionId();
-
+    setLogo();
     showUsername();
     attachLogoutActions();
     detectTouchDevice();
@@ -363,6 +363,18 @@ function hidePasswordReset() {
     }
     if (!config.accountManagement.allowChangePassword) {
         passwordReset.style.display = "none";
+    }
+}
+
+/**
+ * Set the logo
+ */
+function setLogo() {
+    const logo = document.getElementById("logo");
+
+    if (logo && config.logo.sidebar) {
+        logo.src = config.logo.sidebar;
+        return;
     }
 }
 
