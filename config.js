@@ -47,7 +47,7 @@ const config = {
         defaultGroupAlias: "",
         defaultProjectName: "",
         autoLogin: false,
-        requireNewSession: false,
+        requireNewSession: true,
         requireExactAlias: false,
     },
     loginReturnUrls: true, // Toggle appending return urls to restore the previous location when redirected to the login form 
@@ -62,11 +62,11 @@ const config = {
     },
     // Whether to show debugging information in the console
     debug: false,
-    allowSingleSignOn: false,
+    allowSingleSignOn: true,
     accountManagement: {
-        allowForgotPassword: false,
-        allowChangePassword: false,
-        allowCreateAccount: false,
+        allowForgotPassword: true,
+        allowChangePassword: true,
+        allowCreateAccount: true,
     },
     logo: {
         // login: "dist/img/logo-dark.svg",

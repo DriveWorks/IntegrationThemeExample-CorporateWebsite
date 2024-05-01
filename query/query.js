@@ -104,7 +104,7 @@ async function processRequest() {
     const sessionManager = new SessionManager();
     const session = await sessionManager.handleSession();
     if (!session) {
-        displayErrorMessage("Invalid session.");
+        redirectToLogin("Please login to view that.", "error", true);
         return;
     }
 
@@ -492,11 +492,16 @@ function redirectToLogin(notice, state = "error", addReturnUrl = false) {
 
     let logoutQuery = "source=query";
     if (addReturnUrl && config.loginReturnUrls) {
-        logoutQuery = `returnUrl=query&${window.location.search.replaceAll("?", "")}`;
-    }
 
-    // Redirect to login screen, with query value.
-    window.location.href = `../index.html?${logoutQuery}`;
+        if (config.folder && config.folder !== "") {
+            logoutQuery = `returnUrl=${config.folder}/query/${encodeURIComponent(window.location.search)}`;
+        } else {
+            logoutQuery = `returnUrl=query/${encodeURIComponent(window.location.search)}`;
+        }
+
+        // Redirect to login screen, with query value.
+        window.location.href = `../index.html?${logoutQuery}`;
+    }
 }
 
 /**
