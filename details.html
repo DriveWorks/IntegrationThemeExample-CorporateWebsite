@@ -47,45 +47,11 @@
             </div>
 
             <nav id="nav-list">
-                <ul>
-                    <li>
-                        <a href="projects.html">
-                            <svg class="icon">
-                                <use xlink:href="dist/icons.svg#projects" />
-                            </svg>
-                            Projects
-                        </a>
-                    </li>
-                    <li>
-                        <a href="drive-apps.html">
-                            <svg class="icon">
-                                <use xlink:href="dist/icons.svg#drive-apps" />
-                            </svg>
-                            DriveApps
-                        </a>
-                    </li>
-                    <li>
-                        <a href="history.html" class="is-current">
-                            <svg class="icon">
-                                <use xlink:href="dist/icons.svg#history" />
-                            </svg>
-                            History
-                        </a>
-                    </li>
-                    <li>
-                        <a id="password-reset" href="query?DWConstantForm=PasswordReset">
-                            <svg class="icon">
-                                <use xlink:href="dist/icons.svg#reset" />
-                            </svg>
-                            Reset Password
-                        </a>
-                    </li>
-                    <li class="logout-list">
-                        <button type="button" id="logout-nav" class="logout-button">
-                            Log out
-                        </button>
-                    </li>
-                </ul>
+                <li class="logout-list">
+                    <button type="button" id="logout-nav" class="logout-button">
+                        Log out
+                    </button>
+                </li>                
             </nav>
 
             <div class="user-actions">
@@ -231,10 +197,13 @@
 
     <!-- Scripts -->
     <script src="config.js"></script>
+    <script src="dist/js/sidebar.js"></script>
     <script src="dist/js/core.js"></script>
     <script src="dist/js/image-gallery.js"></script>
     <script src="dist/js/lightbox.js"></script>
     <script src="dist/js/details.js"></script>
+    <script src="dist/js/sidebar.js"></script>
+
 
     <!-- Option A) Directly load Client Library -->
     <!-- <script src="https://YOUR-DRIVEWORKS-LIVE-SERVER-URL.COM/DriveworksLiveIntegrationClient.min.js" onload="dwClientLoaded()" onerror="dwClientLoadError()"></script> -->

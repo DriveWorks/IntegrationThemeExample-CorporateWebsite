@@ -63,12 +63,34 @@ const config = {
     },
     // Whether to show debugging information in the console
     debug: false,
-    allowSingleSignOn: true,
+    allowSingleSignOn: false,
     accountManagement: {
-        allowForgotPassword: true,
-        allowChangePassword: true,
-        allowCreateAccount: true,
+        allowForgotPassword: false,
+        allowChangePassword: false,
+        allowCreateAccount: false,
     },
+    sidebarLinks: [
+        {
+            title: "Projects",
+            icon: "projects",
+            href: "projects.html",
+        },
+        {
+            title: "DriveApps",
+            icon: "drive-apps",
+            href: "drive-apps.html",
+        },
+        {
+            title: "History",
+            icon: "history",
+            href: "history.html",
+        },
+        {
+            title: "Reset Password",
+            icon: "reset",
+            href: "query?DWConstantForm=PasswordReset",
+        },
+    ],
     logo: {
         // login: "dist/img/logo-dark.svg",
         login: "dist/img/tpm_logo_color.png",
