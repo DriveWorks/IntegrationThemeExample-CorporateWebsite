@@ -1,5 +1,5 @@
 # DriveWorks Live - Integration Theme Example - Corporate Website
-### Release: 21.1
+### Release: 22.0
 #### Minimum DriveWorks Version: 21.0
 
 An example of a full Corporate Website built upon the DriveWorks Live Integration Theme API.
