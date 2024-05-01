@@ -13,6 +13,7 @@ const config = {
     // Disable the ping by setting to 0
     specificationPingInterval: 0,
     // (Optional) Enter custom redirect URLs for login/logout and Project/DriveApp close/cancel
+    folder: "Corporate/TPM",
     login: {
         redirectUrl: "projects.html",
     },
