@@ -67,6 +67,7 @@
 .project-image .image {
   background-size: contain;
   background-position: center;
+  background-repeat: no-repeat;
   padding-bottom: 100%;
   border-radius: .25em;
 }
