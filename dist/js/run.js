@@ -195,7 +195,7 @@ async function renderNewSpecification(specification, showSpecificationNameInTitl
     specification.registerSpecificationCancelledDelegate(() => formCancelled());
 
     // Start ping (keep Specification alive)
-    pingSpecification(specification);
+    specification.enableAutoPing(SPECIFICATION_PING_INTERVAL);
 
     // [OPTIONAL] Show Specification Name in browser tab title
     if (showSpecificationNameInTitle) {
@@ -257,7 +257,7 @@ async function renderExistingSpecification() {
         specification.registerSpecificationCancelledDelegate(() => existingSpecificationCancelled());
 
         // Start ping (keep Specification alive)
-        pingSpecification(specification);
+        specification.enableAutoPing(SPECIFICATION_PING_INTERVAL);
 
         // [OPTIONAL] Show Specification Name in browser tab title
         setTabTitleSpecificationName(specification);
@@ -266,33 +266,6 @@ async function renderExistingSpecification() {
         loadCustomProjectAssets();
     } catch (error) {
         renderError(existingError, error);
-    }
-}
-
-/**
- * Ping the running Specification.
- *
- * A Specification will timeout after a configured period of inactivity (see DriveWorksConfigUser.xml).
- * This function prevents a Specification timing out as long as the page is in view.
- *
- * @param {Object} specification - The Specification object.
- */
-function pingSpecification(specification) {
-
-    // Disable ping if interval is 0
-    if (SPECIFICATION_PING_INTERVAL === 0) {
-        return;
-    }
-
-    try {
-
-        // Ping Specification to reset timeout
-        specification.ping();
-
-        // Schedule next ping
-        setTimeout(pingSpecification, SPECIFICATION_PING_INTERVAL * 1000, specification);
-    } catch (error) {
-        handleGenericError(error);
     }
 }
 
@@ -412,7 +385,7 @@ function attachSpecificationEvents(formElement) {
     formElement.addEventListener("ActionsUpdated", async () => {
         disableSpecificationActions();
 
-        // Ensure we have the latest Specification Id
+        // Ensure we have the latest Specification Id, as ActionsUpdated can fire before/separately to FormUpdated.
         const formData = await client.getSpecificationFormData(GROUP_ALIAS, rootSpecificationId);
         activeSpecificationId = formData.form.specificationId;
 
@@ -464,32 +437,28 @@ function registerFormButtons(specification) {
  */
 async function renderSpecificationActions() {
 
-    // Get all Actions
+    // Get enabled Actions
     const actions = await client.getSpecificationActions(GROUP_ALIAS, activeSpecificationId);
 
-    // Output Actions if: not stored (first run), objects don't match
-    if (!isEmpty(actions)) {
+    // Clear out old Actions
+    SPECIFICATION_ACTIONS.innerHTML = "";
 
-        // Clear out old Actions
-        SPECIFICATION_ACTIONS.innerHTML = "";
+    // Render Action buttons, if available
+    for (const action of actions) {
+        const name = action.name;
+        const title = action.title;
+        const type = action.type;
 
-        for (let actionIndex = 0; actionIndex < actions.length; actionIndex++) {
-            const action = actions[actionIndex];
-            const name = action.name;
-            const title = action.title;
-            const type = action.type;
+        // Create button
+        const button = document.createElement("button");
+        button.classList.add("action-button");
+        button.innerHTML = title;
 
-            // Create button
-            const button = document.createElement("button");
-            button.classList.add("action-button");
-            button.innerHTML = title;
-
-            // Check type
-            if (type === "Operation") {
-                renderOperationAction(name, button);
-            } else {
-                renderTransitionAction(name, button);
-            }
+        // Check type
+        if (type === "Operation") {
+            renderOperationAction(name, button);
+        } else {
+            renderTransitionAction(name, button);
         }
     }
 

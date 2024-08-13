@@ -204,15 +204,16 @@ class SessionManager {
     }
 
     /**
-     * Logout of all Groups and start a fresh Session.
+     * Logout of all Groups (if pre-existing, valid session), start a new Session.
      */
     async restartSession() {
         try {
             await client.logoutAllGroups();
-            await this.startSession();
         } catch (error) {
             debug(error, true);
         }
+
+        await this.startSession();
     }
 
     /**

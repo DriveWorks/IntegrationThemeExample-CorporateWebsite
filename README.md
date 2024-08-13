@@ -1,5 +1,5 @@
 # DriveWorks Live - Integration Theme Example - Corporate Website
-### Release: 22.0
+### Release: 22.1
 #### Minimum DriveWorks Version: 21.0
 
 An example of a full Corporate Website built upon the DriveWorks Live Integration Theme API.
@@ -9,7 +9,8 @@ This template is designed to be configured and used as is, or the starting point
 
 ---
 
-Please note: DriveWorks are not accepting pull requests for this example.  
+Please note: DriveWorks are not accepting pull requests for this example.
+
 Join our [online community](https://my.driveworks.co.uk) for discussion, resources and to suggest other examples.
 
 ---
@@ -77,7 +78,7 @@ Join our [online community](https://my.driveworks.co.uk) for discussion, resourc
 
 ### Troubleshooting:
 
-If encountering any issues, please check the browser's console for error messages (F12).  
+If encountering any issues, please check the browser's console for error messages (F12).
 
 If you are unable to use the dynamic library loading demonstrated in this example:
 1. In all `.html` files, uncomment "Option A" & replace "YOUR-DRIVEWORKS-LIVE-SERVER-URL.COM" with the URL of your own DriveWorks Live server that is serving `DriveWorksLiveIntegrationClient.min.js` - including any ports.
